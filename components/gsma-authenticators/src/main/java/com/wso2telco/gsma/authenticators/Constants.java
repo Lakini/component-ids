@@ -311,14 +311,6 @@ public final class Constants {
     public static final String SAA_ENPOINT = "Endpoint";
 
     public static final String TRANSACTION_ID = "transactionId";
-    
-    public static final String PARENT_SCOPE = "parent_scope";
-
-    public static final String API_SCOPES = "api_scope";
-    
-    public static final String APPROVED_SCOPES = "approved_scope";
-    
-    public static final String APPROVED_ALL_SCOPES = "approved_all_scope";
 
     public static final String USER_STATUS_STREAM_NAME = "com.wso2telco.userstatus";
 

@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 2015-2016, WSO2.Telco Inc. (http://www.wso2telco.com) 
  *
@@ -45,6 +44,7 @@ import com.wso2telco.gsma.authenticators.util.AuthenticationContextHelper;
 import com.wso2telco.gsma.authenticators.util.FrameworkServiceDataHolder;
 import com.wso2telco.ids.datapublisher.model.UserStatus;
 import com.wso2telco.ids.datapublisher.util.DataPublisherUtil;
+import com.wso2telco.util.Params;
 
 // TODO: Auto-generated Javadoc
 
