@@ -314,6 +314,12 @@ public final class Constants {
     
     public static final String PARENT_SCOPE = "parent_scope";
 
+    public static final String API_SCOPES = "api_scope";
+    
+    public static final String APPROVED_SCOPES = "approved_scope";
+    
+    public static final String APPROVED_ALL_SCOPES = "approved_all_scope";
+
     public static final String USER_STATUS_STREAM_NAME = "com.wso2telco.userstatus";
 
     public static final String USER_STATUS_STREAM_VERSION = "1.0.0";
@@ -405,6 +411,10 @@ public final class Constants {
     public static final String USER_ACTION_USER_TIMEOUT = "userTimeout";
 
     public static final String SCOPE = "scope";
+    
+    public static final String SCOPE_DESCRIPTION = "ScopeDescription"; 
+    
+    public static final String SP_LOGO = "logo"; 
     
     public static final String APPROVE = "approve";
     
