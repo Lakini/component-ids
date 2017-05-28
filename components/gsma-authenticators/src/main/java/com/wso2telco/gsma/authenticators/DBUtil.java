@@ -81,6 +81,14 @@ public class DBUtil {
 		throw new SQLException("Connect Datasource not initialized properly");
 	}
 
+	/**
+	 * To get scope parameter details for scope
+	 * 
+	 * @param scope
+	 * @return
+	 * @throws SQLException
+	 * @throws NamingException
+	 */
 	public static ScopeParam getScopeDetails(String scope) throws SQLException, NamingException {
 		Connection connection = null;
 		PreparedStatement preparedStatement = null;
@@ -161,11 +169,20 @@ public class DBUtil {
 				preparedStatement.setInt(4, operatorID);
 				resultSet = preparedStatement.executeQuery();
 				while (resultSet.next()) {
+					if (resultSet.getString("operator").equalsIgnoreCase("all")) {
 						consentProp.setMsisdn(msisdn);
 						consentProp.setScope(scope);
 						consentProp.setConsumerKey(clientID);
 						consentProp.setOperatorID(operatorID);
 						consentProp.setIs_approved(resultSet.getBoolean("approve"));
+						return consentProp;
+					} else if (resultSet.getString("operator").equalsIgnoreCase(operator)) {
+						consentProp.setMsisdn(msisdn);
+						consentProp.setScope(scope);
+						consentProp.setConsumerKey(clientID);
+						consentProp.setOperator(resultSet.getString("operator"));
+						consentProp.setIs_approved(resultSet.getBoolean("approve"));
+					}
 				}
 			} catch (SQLException e) {
 				throw new SQLException("Error occurred while retrieving user consent details for msisdn :- " + msisdn

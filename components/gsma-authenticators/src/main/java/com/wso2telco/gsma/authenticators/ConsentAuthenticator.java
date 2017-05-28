@@ -133,6 +133,9 @@ public class ConsentAuthenticator extends AbstractApplicationAuthenticator
 			String clientID = context.getProperty(Constants.CLIENT_ID).toString();
 			String operator = context.getProperty(Constants.OPERATOR).toString();
 			int operatorID = (DBUtil.getOperatorDetails(operator)).getOperatorId();
+			String apiScopes = context.getProperty(Constants.API_SCOPES).toString();
+			String apiScopesMinBracket = apiScopes.substring( 1, apiScopes.length() - 1);
+			String[] api_Scopes = apiScopesMinBracket.split( ", ");
 			context.setProperty(Constants.OPERATOR_ID, operatorID);
 			if(context.getProperty(Constants.API_SCOPES) == null){
 				response.sendRedirect(
