@@ -1,6 +1,5 @@
 package com.wso2telco.util;
 
-
 public class Constants {
 
     public static final String MTCONT = "mtcont";
@@ -48,4 +47,5 @@ public class Constants {
     public static final String DISCOVERY="discovery";
     public static final String DEFAULT_PROFILE = "default";
 
+    public static final String USER_STATUS_DATA_PUBLISHING_PARAM = "UserStatusForDataPublishing";
 }
