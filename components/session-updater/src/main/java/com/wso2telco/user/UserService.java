@@ -25,6 +25,7 @@ import org.wso2.carbon.um.ws.api.stub.RemoteUserStoreManagerServiceUserStoreExce
 import org.wso2.carbon.user.api.UserStoreException;
 
 import java.io.IOException;
+import java.rmi.RemoteException;
 import java.util.List;
 import java.util.Map;
 
@@ -38,6 +39,7 @@ public class UserService {
     public void msisdnStatusUpdate(JSONArray msisdnArr, String operator, List<RegisterUserStatusInfo> userRegistrationStatusList) throws IOException, UserStoreException, RemoteUserStoreManagerServiceUserStoreExceptionException, LoginAuthenticationExceptionException, IdentityException {
 
         Map<String, String> discoveredOperatorNameMap = ConfigLoader.getInstance().getMobileConnectConfig().getOperatorDiscoveryNameMap();
+        UserRegistration userRegistration = new UserRegistration();
         //Iterate msisdn list
         for (int i = 0; i < msisdnArr.length(); i++) {
             String msisdn = (String) msisdnArr.get(i);
@@ -102,7 +104,14 @@ public class UserService {
                     //if new user, create profile
                     if (userRegistration.createUserProfile(msisdn, operator)) {
                         statusInfo.setStatus(RegisterUserStatusInfo.registerStatus.OK);
+
+                        //Publish data
+                        UserStatus userStatus = new UserStatus();
+                        userStatus.setMsisdn(msisdn);
+                        userStatus.setOperator(operator);
                         userStatus.setStatus(UserState.OFFLINE_USER_REGISTRATION.name());
+                        // Utility.publishNewUserData(userStatus);
+
                         //send welcome sms
                         SendSMS sendSMS = new SendSMS();
                         sendSMS.sendWelcomeSMS(msisdn, operator);

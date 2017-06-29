@@ -18,6 +18,7 @@ package com.wso2telco;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.wso2telco.core.config.ConfigLoader;
 import com.wso2telco.core.config.MIFEAuthentication;
 import com.wso2telco.core.config.model.MobileConnectConfig;
 import com.wso2telco.core.config.model.PinConfig;
@@ -29,6 +30,9 @@ import com.wso2telco.entity.*;
 import com.wso2telco.exception.AuthenticatorException;
 import com.wso2telco.ids.datapublisher.model.UserStatus;
 import com.wso2telco.ids.datapublisher.util.DataPublisherUtil;
+import com.wso2telco.operator.FindOperatorFactory;
+import com.wso2telco.sms.SendSMS;
+import com.wso2telco.user.UserRegistration;
 import com.wso2telco.user.UserService;
 import com.wso2telco.util.*;
 import org.apache.axis2.AxisFault;
@@ -82,6 +86,7 @@ import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
@@ -550,7 +555,30 @@ public class Endpoints extends ResponseBuilder{
         return url;
     }
 
+    private void postRequest(String url, String requestStr, String operator) throws IOException {
+        MobileConnectConfig.USSDConfig ussdConfig = configurationService.getDataHolder().getMobileConnectConfig()
+                .getUssdConfig();
 
+        final HttpPost postRequest = new HttpPost(url);
+        postRequest.addHeader("accept", "application/json");
+        postRequest.addHeader("Authorization", "Bearer " + ussdConfig.getAuthToken());
+
+        if (operator != null) {
+            postRequest.addHeader("operator", operator);
+        }
+
+        StringEntity input = new StringEntity(requestStr);
+        input.setContentType("application/json");
+
+        postRequest.setEntity(input);
+        final CountDownLatch latch = new CountDownLatch(1);
+
+        if (log.isDebugEnabled()) {
+            log.debug("Posting data  [ " + requestStr + " ] to url [ " + url + " ]");
+        }
+        HttpClient client = new DefaultHttpClient();
+        client.execute(postRequest);
+    }
 
     private String getPinMatchedResponse(Gson gson, String sessionID, String msisdn, String ussdSessionId) {
         log.info("Pins are matched");
