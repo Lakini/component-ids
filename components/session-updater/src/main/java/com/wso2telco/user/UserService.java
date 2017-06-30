@@ -36,7 +36,7 @@ public class UserService {
     private static Log log = LogFactory.getLog(UserService.class);
     private UserRegistration userRegistration = new UserRegistration();
 
-    public void msisdnStatusUpdate(JSONArray msisdnArr, String operator, List<RegisterUserStatusInfo> userRegistrationStatusList) throws IOException, UserStoreException, RemoteUserStoreManagerServiceUserStoreExceptionException, LoginAuthenticationExceptionException, IdentityException {
+    public void msisdnStatusUpdate(JSONArray msisdnArr,String operator, List<RegisterUserStatusInfo> userRegistrationStatusList) throws IOException, UserStoreException, RemoteUserStoreManagerServiceUserStoreExceptionException, LoginAuthenticationExceptionException, IdentityException {
 
         Map<String, String> discoveredOperatorNameMap = ConfigLoader.getInstance().getMobileConnectConfig().getOperatorDiscoveryNameMap();
         UserRegistration userRegistration = new UserRegistration();
