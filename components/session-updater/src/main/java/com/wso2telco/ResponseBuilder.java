@@ -43,6 +43,10 @@ public class ResponseBuilder extends BaseResponseBuilder {
 
     public Response registerUserResponseBuilder(RegisterUserResponseBuilderRequest registerUserResponseBuilderRequest) throws UserStoreException, IdentityException, RemoteUserStoreManagerServiceUserStoreExceptionException, LoginAuthenticationExceptionException, IOException {
 
+        Validation validation = new Validation();
+        UserService userService = new UserService();
+        Gson userStatusInfosJson = new Gson();
+
         int maxMsisdnLimit = configurationService.getDataHolder().getMobileConnectConfig().getUserRegistrationAPI().getMaxMSISDNLimit();
 
         if (!validation.validateOperator(registerUserResponseBuilderRequest.getOperator())) {
