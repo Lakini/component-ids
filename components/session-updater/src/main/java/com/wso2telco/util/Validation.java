@@ -1,7 +1,6 @@
 package com.wso2telco.util;
 
 
-import com.wso2telco.core.config.ConfigLoader;
 import com.wso2telco.core.config.model.MobileConnectConfig;
 import com.wso2telco.core.config.service.ConfigurationService;
 import com.wso2telco.core.config.service.ConfigurationServiceImpl;
