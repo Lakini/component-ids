@@ -29,17 +29,21 @@ import com.wso2telco.entity.*;
 import com.wso2telco.exception.AuthenticatorException;
 import com.wso2telco.ids.datapublisher.model.UserStatus;
 import com.wso2telco.ids.datapublisher.util.DataPublisherUtil;
-import com.wso2telco.util.Constants;
-import com.wso2telco.util.DbUtil;
+import com.wso2telco.user.UserService;
+import com.wso2telco.util.*;
 import org.apache.axis2.AxisFault;
+import org.apache.axis2.client.Options;
+import org.apache.axis2.client.ServiceClient;
+import org.apache.axis2.context.ConfigurationContext;
+import org.apache.axis2.context.ConfigurationContextFactory;
+import org.apache.axis2.transport.http.HTTPConstants;
+import org.apache.axis2.transport.http.HttpTransportProperties;
 import org.apache.commons.lang.IncompleteArgumentException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.HttpStatus;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.wso2.carbon.authenticator.stub.LoginAuthenticationExceptionException;
@@ -49,7 +53,11 @@ import org.wso2.carbon.identity.application.authentication.framework.cache.Authe
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
 import org.wso2.carbon.identity.mgt.stub.UserIdentityManagementAdminServiceIdentityMgtServiceExceptionException;
+import org.wso2.carbon.um.ws.api.stub.RemoteUserStoreManagerServiceStub;
 import org.wso2.carbon.um.ws.api.stub.RemoteUserStoreManagerServiceUserStoreExceptionException;
+import org.wso2.carbon.user.core.UserCoreConstants;
+import org.xml.sax.SAXException;
+
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.FormParam;
@@ -62,6 +70,8 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.rmi.RemoteException;
@@ -72,18 +82,11 @@ import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-//import org.wso2.carbon.identity.application.authentication.framework.cache.AuthenticationContextCache;
-//import org.wso2.carbon.identity.application.authentication.framework.cache.AuthenticationContextCacheEntry;
-//import org.wso2.carbon.identity.application.authentication.framework.cache.AuthenticationContextCacheKey;
-//import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
-
 
 // TODO: Auto-generated Javadoc
 
@@ -91,7 +94,7 @@ import java.util.logging.Logger;
  * The Class Endpoints.
  */
 @Path("/endpoint")
-public class Endpoints {
+public class Endpoints extends ResponseBuilder{
 
     private static boolean temp = false;
 
@@ -121,7 +124,6 @@ public class Endpoints {
      * The error return.
      */
     String errorReturn = "\"" + "errorreturn" + "\"";
-
     /**
      * The log.
      */
@@ -141,8 +143,13 @@ public class Endpoints {
      * The Configuration service
      */
     private static ConfigurationService configurationService = new ConfigurationServiceImpl();
+    private UserRegistrationResponse response = new UserRegistrationResponse();
+    private List<RegisterUserStatusInfo> userRegistrationStatusList = new ArrayList<RegisterUserStatusInfo>();
+    private JSONArray msisdnArr = null;
+    private UserService userService=new UserService();
+    private RegisterUserResponseBuilderRequest registerUserResponseBuilderRequest=new RegisterUserResponseBuilderRequest();
 
-    /**
+    /**admin_url
      * Instantiates a new endpoints.
      */
     public Endpoints() {
@@ -479,7 +486,8 @@ public class Endpoints {
             String operator = (String) authenticationContext.getProperty(Constants.OPERATOR);
             USSDRequest pinUssdRequest = getPinUssdRequest(msisdn, sessionId);
             try {
-                postRequest(getUssdEndpoint(msisdn), new Gson().toJson(pinUssdRequest), operator);
+                RestClient restClient=new RestClient();
+                restClient.postRequest(getUssdEndpoint(msisdn), new Gson().toJson(pinUssdRequest), operator);
                 validationResponse = new ValidationResponse(StatusCode.SUCCESS.getCode(), sessionId, true, true);
             } catch (IOException e) {
                 validationResponse = new ValidationResponse(StatusCode.USSD_ERROR.getCode(), sessionId, true, true);
@@ -542,30 +550,7 @@ public class Endpoints {
         return url;
     }
 
-    private void postRequest(String url, String requestStr, String operator) throws IOException {
-        MobileConnectConfig.USSDConfig ussdConfig = configurationService.getDataHolder().getMobileConnectConfig()
-                .getUssdConfig();
 
-        final HttpPost postRequest = new HttpPost(url);
-        postRequest.addHeader("accept", "application/json");
-        postRequest.addHeader("Authorization", "Bearer " + ussdConfig.getAuthToken());
-
-        if (operator != null) {
-            postRequest.addHeader("operator", operator);
-        }
-
-        StringEntity input = new StringEntity(requestStr);
-        input.setContentType("application/json");
-
-        postRequest.setEntity(input);
-        final CountDownLatch latch = new CountDownLatch(1);
-
-        if (log.isDebugEnabled()) {
-            log.debug("Posting data  [ " + requestStr + " ] to url [ " + url + " ]");
-        }
-        HttpClient client = new DefaultHttpClient();
-        client.execute(postRequest);
-    }
 
     private String getPinMatchedResponse(Gson gson, String sessionID, String msisdn, String ussdSessionId) {
         log.info("Pins are matched");
@@ -1492,4 +1477,34 @@ public class Endpoints {
 
         return validUserInput;
     }
+
+    @POST
+    @Path("/register/v1/{operator}")
+    @Consumes("application/json")
+    @Produces("application/json")
+    public Response registerUser(@PathParam("operator") String operator, String jsonBody) throws Exception {
+        response.setStatusInfo(userRegistrationStatusList);
+        msisdnArr = userService.getmsisdnArr(jsonBody);
+        registerUserResponseBuilderRequest.setMsisdnArr(msisdnArr);
+        registerUserResponseBuilderRequest.setOperator(operator);
+        registerUserResponseBuilderRequest.setResponse(response);
+        registerUserResponseBuilderRequest.setUserRegistrationStatusList(userRegistrationStatusList);
+        return registerUserResponseBuilder(registerUserResponseBuilderRequest);
+    }
+
+    @POST
+    @Path("/unregister/v1/{operator}")
+    @Consumes("application/json")
+    @Produces("application/json")
+    public Response unregisterUser(@PathParam("operator") String operator, String jsonBody) throws Exception {
+        response.setStatusInfo(userRegistrationStatusList);
+        msisdnArr = userService.getmsisdnArr(jsonBody);
+        registerUserResponseBuilderRequest.setMsisdnArr(msisdnArr);
+        registerUserResponseBuilderRequest.setOperator(operator);
+        registerUserResponseBuilderRequest.setResponse(response);
+        registerUserResponseBuilderRequest.setUserRegistrationStatusList(userRegistrationStatusList);
+        return unRegisterUserResponseBuilder(registerUserResponseBuilderRequest);
+    }
+
+
 }
