@@ -27,6 +27,9 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Created by isuru on 1/3/17.
+ */
 public class UserProfileManager {
 
     private static final String CLAIM = "http://wso2.org/claims";
@@ -152,6 +155,7 @@ public class UserProfileManager {
         } catch (AuthenticationFailedException e) {
             log.error("AuthenticationFailedException : " + e.getMessage());
         }
+
         return isNewUser;
     }
 
