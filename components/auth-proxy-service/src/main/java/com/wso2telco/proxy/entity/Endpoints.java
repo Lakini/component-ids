@@ -67,20 +67,6 @@ import java.util.Map.Entry;
 
 @Path("/")
 public class Endpoints {
-
-    /**
-     * todo: 01) read scope-config.xml read -done
-     * todo: 02) check multi scope read DB - already done
-     * todo: 03) check is attribute scope-read DB - done
-     * todo: 09) add attribute sharing values to  redirectURL as a new variable - done /add to context
-     * todo: 10) add VM_SHARE and VM_SHARE_HASH on scope-parameter table
-     * todo: 04) check whether the scopes contain all requested scopes if it is a attribute sharing scope
-     * todo: 05) if then the scopes are VM_share or VM sharing scopes or attribute sharing scopes do registration
-     * todo: 06) handle on net and off net//header enrichment authenticator and msisdn authenticator
-     * todo: 07) make an abstract layer to hold all common methods in authenticator classes
-     * todo: 08) check whether the scope-config give null for some scopes.
-     */
-
     private static Log log = LogFactory.getLog(Endpoints.class);
     private static HashMap<String, MSISDNDecryption> msisdnDecryptorsClassObjectMap = null;
     private static MobileConnectConfig mobileConnectConfigs = null;
