@@ -69,15 +69,17 @@ import java.util.Map.Entry;
 public class Endpoints {
 
     /**
-     * todo: 01) read scope-config.xml read
-     * todo: 02) check multi scope read DB
-     * todo: 03) check is attribute scope-read DB
+     * todo: 01) read scope-config.xml read -done
+     * todo: 02) check multi scope read DB - already done
+     * todo: 03) check is attribute scope-read DB - done
+     * todo: 09) add attribute sharing values to  redirectURL as a new variable - done /add to context
+     * todo: 10) add VM_SHARE and VM_SHARE_HASH on scope-parameter table
      * todo: 04) check whether the scopes contain all requested scopes if it is a attribute sharing scope
      * todo: 05) if then the scopes are VM_share or VM sharing scopes or attribute sharing scopes do registration
      * todo: 06) handle on net and off net//header enrichment authenticator and msisdn authenticator
      * todo: 07) make an abstract layer to hold all common methods in authenticator classes
      * todo: 08) check whether the scope-config give null for some scopes.
-     * */
+     */
 
     private static Log log = LogFactory.getLog(Endpoints.class);
     private static HashMap<String, MSISDNDecryption> msisdnDecryptorsClassObjectMap = null;
@@ -86,8 +88,8 @@ public class Endpoints {
     private static Map<String, List<MSISDNHeader>> operatorsMSISDNHeadersMap;
     private static Map<String, MobileConnectConfig.OPERATOR> operatorPropertiesMap = null;
     private static Map<String, ScopeDetailsConfig.Scope> scopeMap = null;
-    private static Map<String,List<String>> optionalScopesWithRequestMap = null;
-    private static Map<String,List<String>> mandatoryScopesWithRequestMap = null;
+    private static Map<String, List<String>> optionalScopesWithRequestMap = null;
+    private static Map<String, List<String>> mandatoryScopesWithRequestMap = null;
 
     /**
      * The Configuration service
@@ -130,7 +132,7 @@ public class Endpoints {
             List<ScopeDetailsConfig.Scope> scopes = scopeDetailsConfigs.getScope();
 
             for (ScopeDetailsConfig.Scope sc : scopes) {
-                scopeMap.put(sc.getName(),sc);
+                scopeMap.put(sc.getName(), sc);
             }
 
         } catch (SQLException e) {
@@ -234,11 +236,21 @@ public class Endpoints {
                 ScopeParam scopeParam = validateAndSetScopeParameters(loginHint, msisdn, scopeName, redirectUrlInfo,
                         userStatus);
 
+                //Get attribute sharing scopes from user passed scopes
+                Map<String, String> attributeSharingScopesDetails = DBUtils.getIsAttributeScopes(scopeName);
+                List<String> attributeSharingScopes = null;
+
+                for (Map.Entry<String, String> entry : attributeSharingScopesDetails.entrySet()) {
+                    if (entry.getValue().equals("true")) {
+                        attributeSharingScopes.add(entry.getKey());
+                    }
+                }
+
                 String apiScopes = null;
-                if(scopeParam.isConsentPage()==true){
+                if (scopeParam.isConsentPage() == true) {
                     String[] api_Scopes = scopeName.split("\\s+");
-                    api_Scopes=Arrays.copyOfRange(api_Scopes, 1, api_Scopes.length);
-                    apiScopes=Arrays.toString(api_Scopes);
+                    api_Scopes = Arrays.copyOfRange(api_Scopes, 1, api_Scopes.length);
+                    apiScopes = Arrays.toString(api_Scopes);
                 }
 
                 String loginhint_msisdn = null;
@@ -266,7 +278,7 @@ public class Endpoints {
                     }
 
                     List<String> promptValues = queryParams.get(AuthProxyConstants.PROMPT);
-                    if(promptValues != null && !promptValues.isEmpty()) {
+                    if (promptValues != null && !promptValues.isEmpty()) {
                         redirectUrlInfo.setPrompt(promptValues.get(0));
                         queryParams.remove(AuthProxyConstants.PROMPT);
                     }
@@ -301,6 +313,7 @@ public class Endpoints {
                     redirectUrlInfo.setParentScope(scopeParam.getScope());
                     redirectUrlInfo.setTransactionId(userStatus.getTransactionId());
                     redirectUrlInfo.setApiScopes(apiScopes);
+                    redirectUrlInfo.setAttributeSharingScope(attributeSharingScopes);
                     redirectURL = constructRedirectUrl(redirectUrlInfo, userStatus);
 
                     DataPublisherUtil.updateAndPublishUserStatus(
@@ -322,7 +335,6 @@ public class Endpoints {
 
         httpServletResponse.sendRedirect(redirectURL);
     }
-
 
     /**
      * Check if the Scope is allowed for SP
@@ -700,12 +712,12 @@ public class Endpoints {
                         "=" + transactionId;
             }
 
-            if(StringUtils.isNotEmpty(prompt)){
+            if (StringUtils.isNotEmpty(prompt)) {
                 redirectURL = redirectURL + "&" + AuthProxyConstants.TELCO_PROMPT +
                         "=" + prompt;
             }
 
-            if(apiScopes != null && !StringUtils.isEmpty(apiScopes)){
+            if (apiScopes != null && !StringUtils.isEmpty(apiScopes)) {
                 redirectURL = redirectURL + "&" + AuthProxyConstants.API_SCOPES +
                         "=" + apiScopes;
             }
@@ -773,11 +785,17 @@ public class Endpoints {
         userRegistrationAdminService.addUser(userDTO);
     }
 
-    private List<String> getOptionScopeWithRequest(String scopeName){
+    /**
+     * Get the expected optional scope parameters pass with the request
+     *
+     * @param scopeName
+     * @return
+     */
+    private List<String> getOptionScopeWithRequest(String scopeName) {
         ScopeDetailsConfig.Scope scopeValue = null;
         List<ScopeDetailsConfig.Request> requestValue;
 
-        if(scopeMap != null && !scopeMap.isEmpty()){
+        if (scopeMap != null && !scopeMap.isEmpty()) {
             scopeValue = scopeMap.get(scopeName);
         }
 
@@ -785,11 +803,17 @@ public class Endpoints {
         return requestValue.get(1).getOptionalValues();
     }
 
-    private List<String> getMandatoryScopeWithRequest(String scopeName){
+    /**
+     * Get the expected mandatory scope parameters pass with the request
+     *
+     * @param scopeName
+     * @return
+     */
+    private List<String> getMandatoryScopeWithRequest(String scopeName) {
         ScopeDetailsConfig.Scope scopeValue = null;
         List<ScopeDetailsConfig.Request> requestValue;
 
-        if(scopeMap != null && !scopeMap.isEmpty()){
+        if (scopeMap != null && !scopeMap.isEmpty()) {
             scopeValue = scopeMap.get(scopeName);
         }
 
