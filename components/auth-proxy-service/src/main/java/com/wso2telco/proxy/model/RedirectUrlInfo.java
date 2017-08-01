@@ -17,6 +17,8 @@ package com.wso2telco.proxy.model;
 
 import com.wso2telco.core.config.model.ScopeParam;
 
+import java.util.List;
+
 /**
  * RedirectUrlInfo is using to construct redirect url.
  */
@@ -36,6 +38,7 @@ public class RedirectUrlInfo {
     private String transactionId;
     private String prompt;
     private String apiScopes;
+    private List<String> attributeSharingScope;
 
     public void setPrompt(String prompt) { this.prompt = prompt; }
 
@@ -152,4 +155,12 @@ public class RedirectUrlInfo {
 	public void setApiScopes(String apiScopes) {
 		this.apiScopes = apiScopes;
 	}
+
+    public List<String> getAttributeSharingScope() {
+        return attributeSharingScope;
+    }
+
+    public void setAttributeSharingScope(List<String> attributeSharingScope) {
+        this.attributeSharingScope = attributeSharingScope;
+    }
 }
