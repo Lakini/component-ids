@@ -16,48 +16,50 @@
 
 package com.wso2telco.gsma.authenticators.attributeShare;
 
-import com.wso2telco.gsma.authenticators.internal.AuthenticatorEnum;
+import com.wso2telco.gsma.authenticators.Constants;
+import com.wso2telco.gsma.authenticators.dao.SpconfigDAO;
+import com.wso2telco.gsma.authenticators.dao.impl.SpconfigDAOimpl;
+import com.wso2telco.gsma.authenticators.attributeShare.internal.SPType;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
 
-/*This factory class created because the user consent mechanism can be vary with the SP type.
-* TSP1 consent mechanisms not included yet.
-* Currently created one object for both TSP2 and Normal because it seems same same functionality.
-* In future these funcionality can be changed
-*/
+import javax.naming.NamingException;
+import java.sql.SQLException;
+
+/*This factory description*/
 public class AttributeShareFactory {
 
-    static TrustedSP2 trustedSP2;
-    static TrustedSP trustedSP;
-    static NormalSP normalSP;
     private static Log log = LogFactory.getLog(AttributeShareFactory.class);
+    static ConsentedSP consentedSP;
 
-    private AttributeShareFactory(){}
-
-    public static AttributeSharable getAttributeSharable(String trustedStatus) {
+    public static AttributeSharable getAttributeSharable(String operator, String clientID) throws Exception {
 
         AttributeSharable attributeSharable = null;
 
-            if (trustedStatus != null && (trustedStatus.equalsIgnoreCase(AuthenticatorEnum.TrustedStatus.TRUSTED.name()))) {
-                if (trustedSP2 == null) {
-                    trustedSP2 = new TrustedSP2();
-                }
-                attributeSharable = trustedSP2;
-            }
-            if (trustedStatus != null && (trustedStatus.equalsIgnoreCase(AuthenticatorEnum.TrustedStatus.FULLY_TRUSTED.name()))) {
-                if (trustedSP == null) {
-                    trustedSP = new TrustedSP();
-                }
-                attributeSharable = trustedSP;
-            }
-            if (trustedStatus != null && (trustedStatus.equalsIgnoreCase(AuthenticatorEnum.TrustedStatus.UNTRUSTED.name()))) {
-                if (normalSP == null) {
-                    normalSP = new NormalSP();
-                }
-                attributeSharable = normalSP;
+        String spType;
+        try {
 
+            SpconfigDAO spconfigDAO = new SpconfigDAOimpl();
+            spType = spconfigDAO.getSPConfigValue(operator, clientID, Constants.SP_TYPE);
+
+
+            if (spType != null && (spType.equalsIgnoreCase(SPType.TSP2.name()) || spType.equalsIgnoreCase(SPType.NORMAL.name()))) {
+                if (consentedSP == null) {
+                    consentedSP = new ConsentedSP();
+                }
+                attributeSharable = consentedSP;
             }
-        log.debug("SP type" + attributeSharable);
+
+        } catch (SQLException e) {
+            log.error("SQL Exception occurred while retrieving data from Database", e);
+            throw new AuthenticationFailedException(e.getMessage(), e);
+        } catch (NamingException e) {
+            log.error("Naming Exception occurred while retrieving data from Database", e);
+            throw new AuthenticationFailedException(e.getMessage(), e);
+        }
         return attributeSharable;
     }
+
+
 }

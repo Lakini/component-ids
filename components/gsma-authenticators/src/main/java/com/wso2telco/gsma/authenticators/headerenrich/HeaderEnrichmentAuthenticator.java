@@ -102,7 +102,6 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
     static {
         // loads operator and ip validation to static map
         operators = configurationService.getDataHolder().getMobileConnectConfig().getHEADERENRICH().getOperators();
-
         for (MobileConnectConfig.OPERATOR op : operators) {
             operatorIpValidation.put(op.getOperatorName(), Boolean.valueOf(op.getIpValidation()));
         }
