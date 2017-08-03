@@ -245,10 +245,11 @@ public class SMSAuthenticator extends AbstractApplicationAuthenticator
             if (!responseStatus.equalsIgnoreCase(UserResponse.APPROVED.toString())) {
                 throw new AuthenticatorException("Authentication Failed");
             } else {
-                boolean isRegistering = (boolean) context.getProperty(Constants.IS_REGISTERING);
+                boolean isRegistering = (Boolean) context.getProperty(Constants.IS_REGISTERING);
+                boolean isAttributeScope = (Boolean)context.getProperty(Constants.IS_ATTRIBUTE_SHARING_SCOPE);
                 if (isRegistering) {
                     UserProfileManager userProfileManager = new UserProfileManager();
-                    userProfileManager.createUserProfileLoa2(msisdn, operator, Constants.SCOPE_MNV);
+                    userProfileManager.createUserProfileLoa2(msisdn, operator, isAttributeScope);
 
                     MobileConnectConfig.SMSConfig smsConfig = configurationService.getDataHolder().getMobileConnectConfig().getSmsConfig();
                     if (!smsConfig.getWelcomeMessageDisabled()) {

@@ -64,5 +64,5 @@ public class AuthProxyConstants {
     public static final String LOGIN_HINT_MSISDN = "loginhintMsisdn";
     public static final String CLIENT_ID = "client_id";
     public static final String TRANSACTION_ID = "transactionId";
-
+    public static final String ATTR_SHARE_SCOPE = "isAttrScope";
 }
