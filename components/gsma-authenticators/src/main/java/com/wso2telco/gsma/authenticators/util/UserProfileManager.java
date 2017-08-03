@@ -114,13 +114,11 @@ public class UserProfileManager {
                     } else if (MOBILE_CLAIM_NAME.equalsIgnoreCase(userFieldDTOs[count].getClaimUri())) {
                         userFieldDTOs[count].setFieldValue(username);
                     } else if (STATUS_CLAIM_NAME.equalsIgnoreCase(userFieldDTOs[count].getClaimUri())) {
-
                         if(isAttributeScope){
                             userFieldDTOs[count].setFieldValue(STATUS_PARTIALLY_ACTIVE);
                         }
                         else
                             userFieldDTOs[count].setFieldValue(STATUS_ACTIVE);
-
                     } else {
                         userFieldDTOs[count].setFieldValue("");
                     }
@@ -489,7 +487,6 @@ public class UserProfileManager {
      * @throws RemoteUserStoreManagerServiceUserStoreExceptionException
      * @throws RemoteException                                          fieldValues, userName,isAttributeScope
      */
-
     private void updateUserStatus(String userName,boolean isAttributeScope)
             throws RemoteException, RemoteUserStoreManagerServiceUserStoreExceptionException {
 
