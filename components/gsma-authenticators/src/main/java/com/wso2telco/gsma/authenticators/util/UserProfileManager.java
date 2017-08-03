@@ -37,8 +37,6 @@ public class UserProfileManager {
 
     private static final String LOA_CLAIM_NAME = "http://wso2.org/claims/loa";
 
-    private static final String SCOPE_MNV = "mnv";
-
     private static final String LOA_CPI_VALUE = "1";
 
     private static final String LOA_MNV_VALUE = "2";
@@ -95,7 +93,6 @@ public class UserProfileManager {
                 } catch (RemoteException e) {
                     log.error("RemoteException : " + e.getMessage());
                 }
-
 
                 for (int count = 0; count < userFieldDTOs.length; count++) {
 
@@ -491,16 +488,14 @@ public class UserProfileManager {
             throws RemoteException, RemoteUserStoreManagerServiceUserStoreExceptionException {
 
         String userStatus;
-        //todo : is openID attribute scope?
-        if(isAttributeScope){
             try {
                 userStatus = AdminServiceUtil.getUserStatus(userName);
-
-                //todo: how about inactive states?
-                if(!userStatus.equals(STATUS_ACTIVE)){
-                    remoteUserStoreServiceAdminClient.setUserClaim(userName, STATUS_CLAIM_NAME, STATUS_PARTIALLY_ACTIVE,
-                            UserCoreConstants.DEFAULT_PROFILE);
+                if(isAttributeScope) {
+                    updateUserStatus(userStatus,userName,STATUS_PARTIALLY_ACTIVE);
+                }else{
+                    updateUserStatus(userStatus,userName,STATUS_ACTIVE);
                 }
+
             } catch (IdentityException e) {
                 log.error("IdentityException for User- "+userName+":" + e.getMessage());
             } catch (UserStoreException e) {
@@ -508,9 +503,24 @@ public class UserProfileManager {
             } catch (LoginAuthenticationExceptionException e) {
                 log.error("LoginAuthenticationExceptionException- "+userName+":" + e.getMessage());
             }
-        }else{
-            remoteUserStoreServiceAdminClient.setUserClaim(userName, STATUS_CLAIM_NAME, STATUS_ACTIVE,
-                    UserCoreConstants.DEFAULT_PROFILE);
+    }
+
+    private void updateUserStatus(String userStatus,String userName,String statusToBeUpdate){
+        try {
+            switch (userStatus) {
+                case STATUS_INACTIVE:
+                    remoteUserStoreServiceAdminClient.setUserClaim(userName, STATUS_CLAIM_NAME, statusToBeUpdate,
+                            UserCoreConstants.DEFAULT_PROFILE);
+                    break;
+                case STATUS_PARTIALLY_ACTIVE:
+                    remoteUserStoreServiceAdminClient.setUserClaim(userName, STATUS_CLAIM_NAME, statusToBeUpdate,
+                            UserCoreConstants.DEFAULT_PROFILE);
+                    break;
+            }
+        } catch (RemoteException e) {
+            log.error("RemoteException- "+userName+":" + e.getMessage());
+        } catch (RemoteUserStoreManagerServiceUserStoreExceptionException e) {
+            log.error("RemoteUserStoreManagerServiceUserStoreExceptionException- "+userName+":" + e.getMessage());
         }
     }
 }
