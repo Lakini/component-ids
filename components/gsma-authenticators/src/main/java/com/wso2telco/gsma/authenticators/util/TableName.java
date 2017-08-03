@@ -1,5 +1,7 @@
 package com.wso2telco.gsma.authenticators.util;
 
+import com.wso2telco.gsma.authenticators.model.SPConsent;
+
 public enum TableName {
 
     CLIENT_STATUS("clientstatus"),
@@ -10,7 +12,10 @@ public enum TableName {
 
     ALLOWED_AUTHENTICATORS_MNO("allowed_authenticators_mno"),
 
-    ALLOWED_AUTHENTICATORS_SP("allowed_authenticators_sp");
+    ALLOWED_AUTHENTICATORS_SP("allowed_authenticators_sp"),
+
+    CONSENT("consent"),
+    SCOPE_PARAMETER("scope_parameter");
 
     private final String text;
 
