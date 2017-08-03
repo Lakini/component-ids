@@ -103,7 +103,6 @@ public class Endpoints {
 
     static {
         try {
-
             //Load mobile-connect.xml file.
             mobileConnectConfigs = configurationService.getDataHolder().getMobileConnectConfig();
             //Load scope-config.xml file.
@@ -125,8 +124,6 @@ public class Endpoints {
             for (ScopeDetailsConfig.Scope sc : scopes) {
                 scopeMap.put(sc.getName(), sc);
             }
-
-
 
         } catch (SQLException e) {
             log.error("Error occurred while retrieving operator MSISDN properties of operators.");

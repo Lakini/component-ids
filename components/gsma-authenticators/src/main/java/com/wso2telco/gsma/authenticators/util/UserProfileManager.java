@@ -10,6 +10,7 @@ import com.wso2telco.gsma.manager.util.UserProfileClaimsConstant;
 import org.apache.axis2.AxisFault;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.tools.ant.taskdefs.condition.HasFreeSpace;
 import org.wso2.carbon.authenticator.stub.LoginAuthenticationExceptionException;
 import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
 import org.wso2.carbon.identity.base.IdentityException;
@@ -27,9 +28,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Created by isuru on 1/3/17.
- */
 public class UserProfileManager {
 
     private static final String CLAIM = "http://wso2.org/claims";
@@ -155,7 +153,6 @@ public class UserProfileManager {
         } catch (AuthenticationFailedException e) {
             log.error("AuthenticationFailedException : " + e.getMessage());
         }
-
         return isNewUser;
     }
 
