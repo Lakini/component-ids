@@ -36,8 +36,6 @@ public class UserProfileManager {
 
     private static final String LOA_CLAIM_NAME = "http://wso2.org/claims/loa";
 
-    private static final String SCOPE_MNV = "mnv";
-
     private static final String LOA_CPI_VALUE = "1";
 
     private static final String LOA_MNV_VALUE = "2";
@@ -97,7 +95,6 @@ public class UserProfileManager {
                 } catch (RemoteException e) {
                     log.error("RemoteException : " + e.getMessage());
                 }
-
 
                 for (int count = 0; count < userFieldDTOs.length; count++) {
 
@@ -512,6 +509,7 @@ public class UserProfileManager {
     private void updateUserStatus(String userName)
             throws RemoteException, RemoteUserStoreManagerServiceUserStoreExceptionException {
 
+<<<<<<< 9694fc4a687706fbeb88787d364c1986353c1bb9
 		/* updating loa claim for status */
 
         remoteUserStoreServiceAdminClient.setUserClaim(userName, STATUS_CLAIM_NAME, STATUS_ACTIVE,
@@ -519,6 +517,43 @@ public class UserProfileManager {
         remoteUserStoreServiceAdminClient.setUserClaim(userName, REG_MODE_CLAIM_NAME, REG_MODE_ONLINE,
                 UserCoreConstants.DEFAULT_PROFILE);
 
+=======
+        String userStatus;
+            try {
+                userStatus = AdminServiceUtil.getUserStatus(userName);
+                if(isAttributeScope) {
+                    updateUserStatus(userStatus,userName,STATUS_PARTIALLY_ACTIVE);
+                }else{
+                    updateUserStatus(userStatus,userName,STATUS_ACTIVE);
+                }
+
+            } catch (IdentityException e) {
+                log.error("IdentityException for User- "+userName+":" + e.getMessage());
+            } catch (UserStoreException e) {
+                log.error("UserStoreException- "+userName+":" + e.getMessage());
+            } catch (LoginAuthenticationExceptionException e) {
+                log.error("LoginAuthenticationExceptionException- "+userName+":" + e.getMessage());
+            }
+    }
+
+    private void updateUserStatus(String userStatus,String userName,String statusToBeUpdate){
+        try {
+            switch (userStatus) {
+                case STATUS_INACTIVE:
+                    remoteUserStoreServiceAdminClient.setUserClaim(userName, STATUS_CLAIM_NAME, statusToBeUpdate,
+                            UserCoreConstants.DEFAULT_PROFILE);
+                    break;
+                case STATUS_PARTIALLY_ACTIVE:
+                    remoteUserStoreServiceAdminClient.setUserClaim(userName, STATUS_CLAIM_NAME, statusToBeUpdate,
+                            UserCoreConstants.DEFAULT_PROFILE);
+                    break;
+            }
+        } catch (RemoteException e) {
+            log.error("RemoteException- "+userName+":" + e.getMessage());
+        } catch (RemoteUserStoreManagerServiceUserStoreExceptionException e) {
+            log.error("RemoteUserStoreManagerServiceUserStoreExceptionException- "+userName+":" + e.getMessage());
+        }
+>>>>>>> [IDSDEV-621] Updated the user registartion flow and user status for INACTIVE,ACTIVE and PARTIALLY_ACTIVE
     }
 
 }
