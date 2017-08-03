@@ -225,7 +225,10 @@
         <servlet-name>user_consent.do</servlet-name>
         <jsp-file>/mcx-user-registration/user_consent.jsp</jsp-file>
     </servlet>
-
+    <servlet>
+        <servlet-name>user_attribute_consent.do</servlet-name>
+        <jsp-file>/mcx-user-registration/attribute_consent.jsp</jsp-file>
+    </servlet>
     <servlet-mapping>
         <servlet-name>terms_and_conditions</servlet-name>
         <url-pattern>/terms_and_conditions</url-pattern>
@@ -365,6 +368,11 @@
     <servlet-mapping>
         <servlet-name>user_consent.do</servlet-name>
         <url-pattern>/consent.do</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>user_attribute_consent.do</servlet-name>
+        <url-pattern>/attributeconsent.do</url-pattern>
     </servlet-mapping>
 
     <error-page>
