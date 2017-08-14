@@ -15,7 +15,11 @@ public enum TableName {
     ALLOWED_AUTHENTICATORS_SP("allowed_authenticators_sp"),
 
     CONSENT("consent"),
-    SCOPE_PARAMETER("scope_parameter");
+    SCOPE_PARAMETER("scope_parameter"),
+
+    SP_CONFIGURATION("sp_configuration"),
+
+    CONSENT_HISTORY("consent_history");
 
     private final String text;
 
