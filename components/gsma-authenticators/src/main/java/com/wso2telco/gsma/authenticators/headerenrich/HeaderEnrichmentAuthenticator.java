@@ -285,7 +285,6 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
             log.debug("Query parameters : " + queryParams);
         }
 
-
         try {
 
             boolean isattribute = (boolean) context.getProperty(Constants.IS_ATTRIBUTE_SHARING_SCOPE);
@@ -305,9 +304,8 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
                             + context.getContextIdentifier() + "&skipConsent=true&scope=" + displayScopes + "&registering=" + isRegistering);
                 }
 
-
             } else {
-                String loginPage = getAuthEndpointUrl(showTnC, isRegistering);
+                String loginPage = getAuthEndpointUrl(showTnC, isRegistering,isattribute);
                 response.sendRedirect(response.encodeRedirectURL(loginPage + ("?" + queryParams))
                         + "&redirect_uri=" + request.getParameter("redirect_uri")
                         + "&authenticators=" + getName() + ":" + "LOCAL");
@@ -403,7 +401,7 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
                                 //01.get longlived scopes and scope's exp_period one by one
                                 //02.calculate the expiration time for each scopes
                                 //03.insert records into user_consent table
-                                ConsentedSP.PersistConsentedScopeDetails(context);
+                                ConsentedSP.persistConsentedScopeDetails(context);
 
                             }
 
@@ -624,11 +622,12 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
      * @throws LoginAuthenticationExceptionException
      * @throws RemoteUserStoreManagerServiceUserStoreExceptionException
      */
-    private String getAuthEndpointUrl(boolean isShowTnc, boolean isRegistering) {
+    private String getAuthEndpointUrl(boolean isShowTnc, boolean isRegistering,boolean isattribute) {
 
         String loginPage;
 
         if (isRegistering && isShowTnc) {
+
             loginPage = configurationService.getDataHolder().getMobileConnectConfig().getAuthEndpointUrl() +
                     Constants.CONSENT_JSP;
         } else {
