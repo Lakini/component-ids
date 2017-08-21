@@ -52,7 +52,6 @@ import org.wso2.carbon.identity.oauth.common.OAuthConstants;
 import org.wso2.carbon.identity.user.registration.stub.UserRegistrationAdminServiceIdentityException;
 import org.wso2.carbon.um.ws.api.stub.RemoteUserStoreManagerServiceUserStoreExceptionException;
 import org.wso2.carbon.user.api.UserStoreException;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -97,11 +96,28 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
      */
     private static Map<String, Boolean> operatorIpValidation = new HashMap<>();
 
+    private static ScopeDetailsConfig scopeDetailsConfigs = null;
+
+    /**
+     * The Map to store each scope values
+     */
+    private static Map<String, ScopeDetailsConfig.Scope> scopeMap = null;
+
     static {
         // loads operator and ip validation to static map
         operators = configurationService.getDataHolder().getMobileConnectConfig().getHEADERENRICH().getOperators();
+        scopeDetailsConfigs = configurationService.getDataHolder().getScopeDetailsConfig();
+
         for (MobileConnectConfig.OPERATOR op : operators) {
             operatorIpValidation.put(op.getOperatorName(), Boolean.valueOf(op.getIpValidation()));
+        }
+
+        //Load scope related details.
+        scopeMap = new HashMap<>();
+        List<ScopeDetailsConfig.Scope> scopes = scopeDetailsConfigs.getScope();
+
+        for (ScopeDetailsConfig.Scope sc : scopes) {
+            scopeMap.put(sc.getName(), sc);
         }
     }
 
@@ -298,18 +314,6 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
             if (isattribute) {
 
                 Map<String, List<String>> attributeset = AttributeShareFactory.getAttributeSharable(operator, context.getProperty(Constants.CLIENT_ID).toString()).getAttributeMap(context);
-
-                ///add to another method or get from already loaded xml in endpoint
-                ScopeDetailsConfig scopeDetailsConfigs = null;
-                scopeDetailsConfigs = configurationService.getDataHolder().getScopeDetailsConfig();
-
-                //Load scope related request optional parameters.
-                Map<String, ScopeDetailsConfig.Scope> scopeMap = new HashMap<String, ScopeDetailsConfig.Scope>();
-                List<ScopeDetailsConfig.Scope> scopes = scopeDetailsConfigs.getScope();
-
-                for (ScopeDetailsConfig.Scope sc : scopes) {
-                    scopeMap.put(sc.getName(), sc);
-                }
 
                 //Display Consent page for Unregister User
                 if (!attributeset.get("explicitScopes").isEmpty() || !attributeset.get("implicitScopes").isEmpty()) {
