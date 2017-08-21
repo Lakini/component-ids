@@ -311,53 +311,16 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
                             .USER_STATUS_DATA_PUBLISHING_PARAM), DataPublisherUtil.UserState
                             .REDIRECT_TO_CONSENT_PAGE, "Redirecting to consent page");
 
-            if (isattribute) {
+            if (isattribute && !(getAttributes(operator, context.getProperty(Constants.CLIENT_ID).toString(), context).get("explicitScopes").isEmpty())) {
+                String displayScopes = "";
+                displayScopes = Arrays.toString(getAttributes(operator, context.getProperty(Constants.CLIENT_ID).toString(), context).get("explicitScopes").toArray());
 
-                Map<String, List<String>> attributeset = AttributeShareFactory.getAttributeSharable(operator, context.getProperty(Constants.CLIENT_ID).toString()).getAttributeMap(context);
+                response.sendRedirect("/authenticationendpoint/attributeconsent.do?" + OAuthConstants.SESSION_DATA_KEY + "="
+                        + context.getContextIdentifier() + "&skipConsent=true&scope=" + displayScopes + "&registering=" + isRegistering);
 
-                //Display Consent page for Unregister User
-                if (!attributeset.get("explicitScopes").isEmpty() || !attributeset.get("implicitScopes").isEmpty()) {
-                    List<String> consentAttribute = new ArrayList<>();
-                    List<String> claimSet = new ArrayList<>();
-                    String displayScopes = "";
-
-                    if (!attributeset.get("explicitScopes").isEmpty()) {
-
-                        for (int i = 0; i < attributeset.get("explicitScopes").size(); i++) {
-                            claimSet = scopeMap.get(attributeset.get("explicitScopes").get(i)).getClaimSet();
-                            for (int j = 0; j < claimSet.size(); j++) {
-                                if (!consentAttribute.contains(claimSet.get(j))) {
-                                    consentAttribute.add(claimSet.get(j));
-                                }
-                            }
-                        }
-
-                        displayScopes = consentAttribute.toString();
-
-                    }
-
-                    if (!attributeset.get("implicitScopes").isEmpty()) {
-                        for (int i = 0; i < attributeset.get("implicitScopes").size(); i++) {
-                            claimSet = scopeMap.get(attributeset.get("implicitScopes").get(i)).getClaimSet();
-                            for (int j = 0; j < claimSet.size(); j++) {
-                                if (!consentAttribute.contains(claimSet.get(j))) {
-                                    consentAttribute.add(claimSet.get(j));
-                                }
-                            }
-                        }
-                        displayScopes = consentAttribute.toString();
-                    }
-                    response.sendRedirect("/authenticationendpoint/attributeconsent.do?" + OAuthConstants.SESSION_DATA_KEY + "="
-                            + context.getContextIdentifier() + "&skipConsent=true&scope=" + displayScopes + "&registering=" + isRegistering);
-                } else {
-                    //when request contains no consent scopes
-                    String loginPage = getAuthEndpointUrl(showTnC, isRegistering, isattribute);
-                    response.sendRedirect(response.encodeRedirectURL(loginPage + ("?" + queryParams))
-                            + "&redirect_uri=" + request.getParameter("redirect_uri")
-                            + "&authenticators=" + getName() + ":" + "LOCAL");
-                }
             } else {
                 String loginPage = getAuthEndpointUrl(showTnC, isRegistering, isattribute);
+
                 response.sendRedirect(response.encodeRedirectURL(loginPage + ("?" + queryParams))
                         + "&redirect_uri=" + request.getParameter("redirect_uri")
                         + "&authenticators=" + getName() + ":" + "LOCAL");
@@ -373,6 +336,11 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
         }
         return;
 
+    }
+
+    private Map<String, List<String>> getAttributes(String operator, String clientId, AuthenticationContext context) throws Exception{
+        Map<String, List<String>> attributeset = AttributeShareFactory.getAttributeSharable(operator, clientId).getAttributeMap(context);
+        return attributeset;
     }
 
     /* (non-Javadoc)
