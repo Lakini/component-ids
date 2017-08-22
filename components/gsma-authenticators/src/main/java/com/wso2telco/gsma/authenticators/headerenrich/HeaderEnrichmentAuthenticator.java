@@ -96,28 +96,12 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
      */
     private static Map<String, Boolean> operatorIpValidation = new HashMap<>();
 
-    private static ScopeDetailsConfig scopeDetailsConfigs = null;
-
-    /**
-     * The Map to store each scope values
-     */
-    private static Map<String, ScopeDetailsConfig.Scope> scopeMap = null;
-
     static {
         // loads operator and ip validation to static map
         operators = configurationService.getDataHolder().getMobileConnectConfig().getHEADERENRICH().getOperators();
-        scopeDetailsConfigs = configurationService.getDataHolder().getScopeDetailsConfig();
 
         for (MobileConnectConfig.OPERATOR op : operators) {
             operatorIpValidation.put(op.getOperatorName(), Boolean.valueOf(op.getIpValidation()));
-        }
-
-        //Load scope related details.
-        scopeMap = new HashMap<>();
-        List<ScopeDetailsConfig.Scope> scopes = scopeDetailsConfigs.getScope();
-
-        for (ScopeDetailsConfig.Scope sc : scopes) {
-            scopeMap.put(sc.getName(), sc);
         }
     }
 
@@ -128,11 +112,9 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
     @Override
     public boolean canHandle(HttpServletRequest request) {
 
-
         if (log.isDebugEnabled()) {
             log.debug("Header Enrich Authenticator canHandle invoked");
         }
-
         return true;
     }
 
@@ -157,7 +139,6 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
             return this.processRequest(request, response, context);
         }
     }
-
 
     public AuthenticatorFlowStatus processRequest(HttpServletRequest request, HttpServletResponse response,
                                                   AuthenticationContext context) throws
@@ -310,10 +291,13 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
                     .updateAndPublishUserStatus((UserStatus) context.getParameter(Constants
                             .USER_STATUS_DATA_PUBLISHING_PARAM), DataPublisherUtil.UserState
                             .REDIRECT_TO_CONSENT_PAGE, "Redirecting to consent page");
+            Map<String, List<String>> attributeMap = getAttributes(operator, context.getProperty(Constants.CLIENT_ID).toString(), context);
 
-            if (isattribute && !(getAttributes(operator, context.getProperty(Constants.CLIENT_ID).toString(), context).get("explicitScopes").isEmpty())) {
+            if (isattribute && !(attributeMap.get("explicitScopes").isEmpty())) {
                 String displayScopes = "";
-                displayScopes = Arrays.toString(getAttributes(operator, context.getProperty(Constants.CLIENT_ID).toString(), context).get("explicitScopes").toArray());
+                //displayScopes = Arrays.toString(getAttributes(operator, context.getProperty(Constants.CLIENT_ID).toString(), context).get("explicitScopes").toArray());
+
+                displayScopes = AttributeShareFactory.getScopestoDisplay(attributeMap).toString();
 
                 response.sendRedirect("/authenticationendpoint/attributeconsent.do?" + OAuthConstants.SESSION_DATA_KEY + "="
                         + context.getContextIdentifier() + "&skipConsent=true&scope=" + displayScopes + "&registering=" + isRegistering);
