@@ -174,7 +174,7 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
 
 
 
-                if (isattribute && Constants.NO.equalsIgnoreCase(context.getProperty(Constants.IS_CONSENT).toString()) && !(getAttributes(operator, context.getProperty(Constants.CLIENT_ID).toString(), context).get("explicitScopes").isEmpty())) {
+                if (!isRegistering && isattribute && Constants.NO.equalsIgnoreCase(context.getProperty(Constants.IS_CONSENT).toString()) && !(getAttributes(operator, context.getProperty(Constants.CLIENT_ID).toString(), context).get("explicitScopes").isEmpty())) {
 
                     String displayScopes = Arrays.toString(getAttributes(operator, context.getProperty(Constants.CLIENT_ID).toString(), context).get(Constants.EXPLICIT_SCOPES).toArray());
                     context.setProperty(Constants.IS_CONSENT,Constants.YES);
@@ -439,11 +439,7 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
                             if (!smsConfig.getWelcomeMessageDisabled()) {
                                 WelcomeSmsUtil.handleWelcomeSms(context, userStatus, msisdn, operator, smsConfig);
                             }
-                            if (isAttributeScope && context.getProperty("longlivedScopes")!= null) {
-                                //ToDO
-                                //01.get longlived scopes and scope's exp_period one by one
-                                //02.calculate the expiration time for each scopes
-                                //03.insert records into user_consent table
+                            if (isAttributeScope && context.getProperty(Constants.LONGLIVEDSCOPES)!= null) {
                                 ConsentedSP.persistConsentedScopeDetails(context);
 
                             }
@@ -456,7 +452,10 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
                             log.error("Welcome SMS sending failed", e);
                         }
                     } else {
-                        // login flow
+                        if (isAttributeScope && context.getProperty(Constants.LONGLIVEDSCOPES)!= null) {
+                            ConsentedSP.persistConsentedScopeDetails(context);
+
+                        }
                     }
                     context.setProperty(Constants.IS_PIN_RESET, false);
                     // explicitly remove all other authenticators and mark as a success
