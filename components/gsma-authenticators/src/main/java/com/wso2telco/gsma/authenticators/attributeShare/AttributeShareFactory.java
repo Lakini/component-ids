@@ -27,7 +27,6 @@ import org.wso2.carbon.identity.application.authentication.framework.exception.A
 import javax.naming.NamingException;
 import java.sql.SQLException;
 
-/*This factory description*/
 public class AttributeShareFactory {
 
     private static Log log = LogFactory.getLog(AttributeShareFactory.class);
