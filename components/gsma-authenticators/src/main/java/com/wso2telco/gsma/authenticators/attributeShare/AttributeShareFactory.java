@@ -43,25 +43,8 @@ import java.util.Map;
 public class AttributeShareFactory {
 
     private static Log log = LogFactory.getLog(AttributeShareFactory.class);
-    private static ScopeDetailsConfig scopeDetailsConfigs = null;
-    private static Map<String, ScopeDetailsConfig.Scope> scopeMap = null;
     static ConsentedSP consentedSP;
     static TrustedSP trustedSP;
-    private static ConfigurationService configurationService = new ConfigurationServiceImpl();
-
-    static {
-        //Load scope-config.xml file.
-        scopeDetailsConfigs = configurationService.getDataHolder().getScopeDetailsConfig();
-
-        //Load scope related request optional parameters.
-        scopeMap = new HashMap<String, ScopeDetailsConfig.Scope>();
-        List<ScopeDetailsConfig.Scope> scopes = scopeDetailsConfigs.getScope();
-
-        for (ScopeDetailsConfig.Scope sc : scopes) {
-            scopeMap.put(sc.getName(), sc);
-        }
-    }
-
 
     public static AttributeSharable getAttributeSharable(String operator, String clientID) throws Exception {
 
@@ -95,24 +78,4 @@ public class AttributeShareFactory {
         }
         return attributeSharable;
     }
-
-    public static List<String> getScopestoDisplay(Map<String, List<String>> attributeSet) {
-
-        List<String> consentAttribute = new ArrayList<>();
-        List<String> claimSet;
-
-        if (!attributeSet.get("explicitScopes").isEmpty()) {
-
-            for (int i = 0; i < attributeSet.get("explicitScopes").size(); i++) {
-                claimSet = scopeMap.get(attributeSet.get("explicitScopes").get(i)).getClaimSet();
-                for (int j = 0; j < claimSet.size(); j++) {
-                    if (!consentAttribute.contains(claimSet.get(j))) {
-                        consentAttribute.add(claimSet.get(j));
-                    }
-                }
-            }
-        }
-        return consentAttribute;
-    }
-
 }

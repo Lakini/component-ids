@@ -146,6 +146,22 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
         if ((canHandle(request) && !triggerInitiateAuthRequest(context) && (request.getAttribute(FrameworkConstants
                 .REQ_ATTR_HANDLED) == null || !(Boolean) request.getAttribute(FrameworkConstants.REQ_ATTR_HANDLED)))) {
             try {
+
+                boolean isattribute = (boolean) context.getProperty(Constants.IS_ATTRIBUTE_SHARING_SCOPE);
+                String operator = context.getProperty(Constants.OPERATOR).toString();
+                boolean isRegistering = (boolean) context.getProperty(Constants.IS_REGISTERING);
+
+                if (!isRegistering && isattribute && Constants.NO.equalsIgnoreCase(context.getProperty(Constants.IS_CONSENT).toString()) && !(getAttributes(operator, context.getProperty(Constants.CLIENT_ID).toString(), context).get("explicitScopes").isEmpty())) {
+
+                    String displayScopes = Arrays.toString(getAttributes(operator, context.getProperty(Constants.CLIENT_ID).toString(), context).get(Constants.EXPLICIT_SCOPES).toArray());
+                    context.setProperty(Constants.IS_CONSENT,Constants.YES);
+                    response.sendRedirect("/authenticationendpoint/attributeconsent.do?" + OAuthConstants.SESSION_DATA_KEY + "="
+                            + context.getContextIdentifier() + "&skipConsent=true&scope=" + displayScopes + "&registering=" + isRegistering);
+                    context.setCurrentAuthenticator(getName());
+                    return AuthenticatorFlowStatus.INCOMPLETE;
+
+                }
+
                 processAuthenticationResponse(request, response, context);
                 if (this instanceof LocalApplicationAuthenticator && !context.getSequenceConfig()
                         .getApplicationConfig().isSaaSApp()) {
@@ -189,6 +205,9 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
                 } else {
                     throw e;
                 }
+            } catch (Exception e){
+                log.debug("error occurred while doing the attribute share ");
+                return null;
             }
         } else {
             initiateAuthenticationRequest(request, response, context);
@@ -294,11 +313,8 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
             Map<String, List<String>> attributeMap = getAttributes(operator, context.getProperty(Constants.CLIENT_ID).toString(), context);
 
             if (isattribute && !(attributeMap.get("explicitScopes").isEmpty())) {
-                String displayScopes = "";
-                //displayScopes = Arrays.toString(getAttributes(operator, context.getProperty(Constants.CLIENT_ID).toString(), context).get("explicitScopes").toArray());
 
-                displayScopes = AttributeShareFactory.getScopestoDisplay(attributeMap).toString();
-
+                String displayScopes = Arrays.toString(attributeMap.get(Constants.EXPLICIT_SCOPES).toArray());
                 response.sendRedirect("/authenticationendpoint/attributeconsent.do?" + OAuthConstants.SESSION_DATA_KEY + "="
                         + context.getContextIdentifier() + "&skipConsent=true&scope=" + displayScopes + "&registering=" + isRegistering);
 
