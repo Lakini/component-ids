@@ -42,9 +42,10 @@ import java.util.Map;
 */
 public class AttributeShareFactory {
 
-    private static Log log = LogFactory.getLog(AttributeShareFactory.class);
-    static ConsentedSP consentedSP;
+    static TrustedSP2 trustedSP2;
     static TrustedSP trustedSP;
+    static NormalSP normalSP;
+    private static Log log = LogFactory.getLog(AttributeShareFactory.class);
 
     public static AttributeSharable getAttributeSharable(String operator, String clientID) throws Exception {
 
@@ -57,16 +58,24 @@ public class AttributeShareFactory {
             spType = attributeConfigDAO.getSPConfigValue(operator, clientID, Constants.SP_TYPE);
 
             if (spType != null && (spType.equalsIgnoreCase(SPType.TSP2.name()) || spType.equalsIgnoreCase(SPType.NORMAL.name()))) {
-                if (consentedSP == null) {
-                    consentedSP = new ConsentedSP();
+                if (trustedSP2 == null) {
+                    trustedSP2 = new TrustedSP2();
                 }
-                attributeSharable = consentedSP;
+                attributeSharable = trustedSP2;
 
-            } if(spType != null && (spType.equalsIgnoreCase(SPType.TSP1.name()))){
+            }
+            if (spType != null && (spType.equalsIgnoreCase(SPType.TSP1.name()))) {
                 if (trustedSP == null) {
                     trustedSP = new TrustedSP();
                 }
                 attributeSharable = trustedSP;
+            }
+            if (spType != null && (spType.equalsIgnoreCase(SPType.NORMAL.name()))) {
+                if (normalSP == null) {
+                    normalSP = new NormalSP();
+                }
+                attributeSharable = normalSP;
+
             }
 
         } catch (SQLException e) {

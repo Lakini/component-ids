@@ -164,6 +164,7 @@ public abstract class AbstractAttributeShare implements AttributeSharable {
 
     public static List<String> getScopestoDisplay(List<String> attributeSet, String scope) {
 
+
         List<String> consentAttribute = attributeSet;
         List<String> displayAttributeSet = new ArrayList<>();
 
@@ -175,4 +176,6 @@ public abstract class AbstractAttributeShare implements AttributeSharable {
         }
         return consentAttribute;
     }
+
+    public abstract Map<String,String> getAttributeShareDetails(AuthenticationContext context) throws Exception;
 }

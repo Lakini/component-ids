@@ -26,7 +26,7 @@ import com.wso2telco.gsma.authenticators.BaseApplicationAuthenticator;
 import com.wso2telco.gsma.authenticators.Constants;
 import com.wso2telco.gsma.authenticators.IPRangeChecker;
 import com.wso2telco.gsma.authenticators.attributeShare.AttributeShareFactory;
-import com.wso2telco.gsma.authenticators.attributeShare.ConsentedSP;
+import com.wso2telco.gsma.authenticators.attributeShare.TrustedSP2;
 import com.wso2telco.gsma.authenticators.util.*;
 import com.wso2telco.gsma.manager.client.ClaimManagementClient;
 import com.wso2telco.gsma.manager.client.LoginAdminServiceClient;
@@ -150,13 +150,23 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
                 boolean isattribute = (boolean) context.getProperty(Constants.IS_ATTRIBUTE_SHARING_SCOPE);
                 String operator = context.getProperty(Constants.OPERATOR).toString();
                 boolean isRegistering = (boolean) context.getProperty(Constants.IS_REGISTERING);
+                Map<String, String> attributeset = new HashMap();
 
-                if (!isRegistering && isattribute && Constants.NO.equalsIgnoreCase(context.getProperty(Constants.IS_CONSENT).toString()) && !(getAttributes(operator, context.getProperty(Constants.CLIENT_ID).toString(), context).get("explicitScopes").isEmpty())) {
+                if(isattribute){
+                String clientId = context.getProperty(Constants.CLIENT_ID).toString();
+                attributeset = AttributeShareFactory.getAttributeSharable(operator, clientId).getAttributeShareDetails(context);
+            }
 
-                    String displayScopes = Arrays.toString(getAttributes(operator, context.getProperty(Constants.CLIENT_ID).toString(), context).get(Constants.EXPLICIT_SCOPES).toArray());
+            String loginPage = getAuthEndpointUrl(false, isRegistering,Boolean.parseBoolean( attributeset.get(Constants.IS_DISPLAYSCOPE)));
+
+                if (!isRegistering && isattribute && Constants.NO.equalsIgnoreCase(context.getProperty(Constants.IS_CONSENT).toString()) && Boolean.parseBoolean( attributeset.get(Constants.IS_DISPLAYSCOPE))) {
+
+
                     context.setProperty(Constants.IS_CONSENT,Constants.YES);
-                    response.sendRedirect("/authenticationendpoint/attributeconsent.do?" + OAuthConstants.SESSION_DATA_KEY + "="
-                            + context.getContextIdentifier() + "&skipConsent=true&scope=" + displayScopes + "&registering=" + isRegistering);
+                    response.sendRedirect(response.encodeRedirectURL(loginPage)+ "?"+OAuthConstants.SESSION_DATA_KEY + "="
+                            + context.getContextIdentifier() + "&skipConsent=true&scope=" + attributeset.get(Constants.DISPLAY_SCOPES) + "&registering=" + isRegistering
+                            + "&redirect_uri=" + request.getParameter("redirect_uri")
+                            + "&authenticators=" + getName() + ":" + "LOCAL" );
                     context.setCurrentAuthenticator(getName());
                     return AuthenticatorFlowStatus.INCOMPLETE;
 
@@ -302,24 +312,31 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
             log.debug("Query parameters : " + queryParams);
         }
 
+        Map<String, String> attributeset = new HashMap();
+
         try {
 
             boolean isattribute = (boolean) context.getProperty(Constants.IS_ATTRIBUTE_SHARING_SCOPE);
+
 
             DataPublisherUtil
                     .updateAndPublishUserStatus((UserStatus) context.getParameter(Constants
                             .USER_STATUS_DATA_PUBLISHING_PARAM), DataPublisherUtil.UserState
                             .REDIRECT_TO_CONSENT_PAGE, "Redirecting to consent page");
-            Map<String, List<String>> attributeMap = getAttributes(operator, context.getProperty(Constants.CLIENT_ID).toString(), context);
+              if(isattribute){
+                String clientId = context.getProperty(Constants.CLIENT_ID).toString();
+                attributeset = AttributeShareFactory.getAttributeSharable(operator, clientId).getAttributeShareDetails(context);
+            }
 
-            if (isattribute && !(attributeMap.get("explicitScopes").isEmpty())) {
+            String loginPage = getAuthEndpointUrl(showTnC, isRegistering,Boolean.parseBoolean( attributeset.get(Constants.IS_DISPLAYSCOPE)));
 
-                String displayScopes = Arrays.toString(attributeMap.get(Constants.EXPLICIT_SCOPES).toArray());
-                response.sendRedirect("/authenticationendpoint/attributeconsent.do?" + OAuthConstants.SESSION_DATA_KEY + "="
-                        + context.getContextIdentifier() + "&skipConsent=true&scope=" + displayScopes + "&registering=" + isRegistering);
+            if(Boolean.parseBoolean( attributeset.get(Constants.IS_DISPLAYSCOPE))){
 
+                response.sendRedirect(response.encodeRedirectURL(loginPage)+ "?"+OAuthConstants.SESSION_DATA_KEY + "="
+                        + context.getContextIdentifier() + "&skipConsent=true&scope=" + attributeset.get(Constants.DISPLAY_SCOPES) + "&registering=" + Boolean.parseBoolean(Constants.IS_TNC_FORNEWUSE)
+                        + "&redirect_uri=" + request.getParameter("redirect_uri")
+                        + "&authenticators=" + getName() + ":" + "LOCAL" );
             } else {
-                String loginPage = getAuthEndpointUrl(showTnC, isRegistering, isattribute);
 
                 response.sendRedirect(response.encodeRedirectURL(loginPage + ("?" + queryParams))
                         + "&redirect_uri=" + request.getParameter("redirect_uri")
@@ -336,11 +353,6 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
         }
         return;
 
-    }
-
-    private Map<String, List<String>> getAttributes(String operator, String clientId, AuthenticationContext context) throws Exception{
-        Map<String, List<String>> attributeset = AttributeShareFactory.getAttributeSharable(operator, clientId).getAttributeMap(context);
-        return attributeset;
     }
 
     /* (non-Javadoc)
@@ -417,7 +429,7 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
                                 WelcomeSmsUtil.handleWelcomeSms(context, userStatus, msisdn, operator, smsConfig);
                             }
                             if (isAttributeScope && context.getProperty(Constants.LONGLIVEDSCOPES)!= null) {
-                                ConsentedSP.persistConsentedScopeDetails(context);
+                                TrustedSP2.persistConsentedScopeDetails(context);
 
                             }
 
@@ -430,7 +442,7 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
                         }
                     } else {
                         if (isAttributeScope && context.getProperty(Constants.LONGLIVEDSCOPES)!= null) {
-                            ConsentedSP.persistConsentedScopeDetails(context);
+                            TrustedSP2.persistConsentedScopeDetails(context);
 
                         }
                     }
@@ -641,14 +653,21 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
      * @throws LoginAuthenticationExceptionException
      * @throws RemoteUserStoreManagerServiceUserStoreExceptionException
      */
-    private String getAuthEndpointUrl(boolean isShowTnc, boolean isRegistering,boolean isattribute) {
+    private String getAuthEndpointUrl(boolean isShowTnc, boolean isRegistering,boolean explicitScope) {
 
         String loginPage;
 
         if (isRegistering && isShowTnc) {
 
-            loginPage = configurationService.getDataHolder().getMobileConnectConfig().getAuthEndpointUrl() +
+
+             if (explicitScope) {
+                    loginPage = configurationService.getDataHolder().getMobileConnectConfig().getAuthEndpointUrl() + Constants.ATTRIBUTE_CONSENT_JSP;
+                } else {
+                    loginPage = configurationService.getDataHolder().getMobileConnectConfig().getAuthEndpointUrl() +
                     Constants.CONSENT_JSP;
+                }
+
+
         } else {
             loginPage = ConfigurationFacade.getInstance().getAuthenticationEndpointURL();
         }
