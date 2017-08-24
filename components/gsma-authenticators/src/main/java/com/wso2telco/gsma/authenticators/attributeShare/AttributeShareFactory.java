@@ -16,21 +16,36 @@
 
 package com.wso2telco.gsma.authenticators.attributeShare;
 
+import com.wso2telco.core.config.model.ScopeDetailsConfig;
+import com.wso2telco.core.config.service.ConfigurationService;
+import com.wso2telco.core.config.service.ConfigurationServiceImpl;
 import com.wso2telco.gsma.authenticators.Constants;
-import com.wso2telco.gsma.authenticators.dao.SpconfigDAO;
-import com.wso2telco.gsma.authenticators.dao.impl.SpconfigDAOimpl;
+import com.wso2telco.gsma.authenticators.dao.AttributeConfigDAO;
+import com.wso2telco.gsma.authenticators.dao.impl.AttributeConfigDAOimpl;
 import com.wso2telco.gsma.authenticators.attributeShare.internal.SPType;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
 
 import javax.naming.NamingException;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
+/*This factory class created because the user consent mechanism can be vary with the SP type.
+* TSP1 consent mechanisms not included yet.
+* Currently created one object for both TSP2 and Normal because it seems same same functionality.
+* In future these funcionality can be changed
+*/
 public class AttributeShareFactory {
 
+    static TrustedSP2 trustedSP2;
+    static TrustedSP trustedSP;
+    static NormalSP normalSP;
     private static Log log = LogFactory.getLog(AttributeShareFactory.class);
-    static ConsentedSP consentedSP;
 
     public static AttributeSharable getAttributeSharable(String operator, String clientID) throws Exception {
 
@@ -39,15 +54,28 @@ public class AttributeShareFactory {
         String spType;
         try {
 
-            SpconfigDAO spconfigDAO = new SpconfigDAOimpl();
-            spType = spconfigDAO.getSPConfigValue(operator, clientID, Constants.SP_TYPE);
-
+            AttributeConfigDAO attributeConfigDAO = new AttributeConfigDAOimpl();
+            spType = attributeConfigDAO.getSPConfigValue(operator, clientID, Constants.SP_TYPE);
 
             if (spType != null && (spType.equalsIgnoreCase(SPType.TSP2.name()) || spType.equalsIgnoreCase(SPType.NORMAL.name()))) {
-                if (consentedSP == null) {
-                    consentedSP = new ConsentedSP();
+                if (trustedSP2 == null) {
+                    trustedSP2 = new TrustedSP2();
                 }
-                attributeSharable = consentedSP;
+                attributeSharable = trustedSP2;
+
+            }
+            if (spType != null && (spType.equalsIgnoreCase(SPType.TSP1.name()))) {
+                if (trustedSP == null) {
+                    trustedSP = new TrustedSP();
+                }
+                attributeSharable = trustedSP;
+            }
+            if (spType != null && (spType.equalsIgnoreCase(SPType.NORMAL.name()))) {
+                if (normalSP == null) {
+                    normalSP = new NormalSP();
+                }
+                attributeSharable = normalSP;
+
             }
 
         } catch (SQLException e) {
@@ -59,6 +87,4 @@ public class AttributeShareFactory {
         }
         return attributeSharable;
     }
-
-
 }

@@ -311,6 +311,8 @@ public final class Constants {
     public static final String SAA_ENPOINT = "Endpoint";
 
     public static final String TRANSACTION_ID = "transactionId";
+    
+    public static final String PARENT_SCOPE = "parent_scope";
 
     public static final String API_SCOPES = "api_scope";
     
