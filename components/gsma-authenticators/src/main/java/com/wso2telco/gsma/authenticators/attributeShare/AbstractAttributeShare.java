@@ -14,9 +14,13 @@ import com.wso2telco.gsma.authenticators.dao.impl.AttributeConfigDAOimpl;
 import com.wso2telco.gsma.authenticators.model.UserConsentDetails;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.identity.application.authentication.framework.config.ConfigurationFacade;
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
+import org.wso2.carbon.identity.oauth.common.OAuthConstants;
 
 import javax.naming.NamingException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -39,7 +43,7 @@ public abstract class AbstractAttributeShare implements AttributeSharable {
 
         //Load scope related request optional parameters.
         scopeMap = new HashMap<String, ScopeDetailsConfig.Scope>();
-        List<ScopeDetailsConfig.Scope> scopes = scopeDetailsConfigs.getScope();
+        List<ScopeDetailsConfig.Scope> scopes = scopeDetailsConfigs.getPremiumInfoScope();
 
         for (ScopeDetailsConfig.Scope sc : scopes) {
             scopeMap.put(sc.getName(), sc);
@@ -57,7 +61,7 @@ public abstract class AbstractAttributeShare implements AttributeSharable {
 
         for (ScopeParam scopeParam : scopeParamList) {
             String consentType = scopeParam.getConsentType();
-            String validityType = scopeParam.getConsent_validity_type();
+            String validityType = scopeParam.getConsentValidityType();
             String scope = scopeParam.getScope();
             Map<String, String> validityMap = getValiditeProcess(context, validityType, scope);
 
@@ -178,4 +182,42 @@ public abstract class AbstractAttributeShare implements AttributeSharable {
     }
 
     public abstract Map<String,String> getAttributeShareDetails(AuthenticationContext context) throws Exception;
+
+    public void getConsentFromUser(HttpServletRequest request,
+                                   HttpServletResponse response, AuthenticationContext context) throws Exception {
+
+        boolean isShowTns =false;
+        boolean isRegistering =false;
+        boolean explicitScope = false;
+
+        String loginPage =getAuthEndpointUrl(isShowTns,isRegistering,explicitScope);
+        response.sendRedirect(response.encodeRedirectURL(loginPage)+ "?"+ OAuthConstants.SESSION_DATA_KEY + "="
+                + context.getContextIdentifier() + "&skipConsent=true&scope=" + "attributeset.get(Constants.DISPLAY_SCOPES)" + "&registering=" + Boolean.parseBoolean(attributeset.get(Constants.IS_TNC_FORNEWUSE))
+                + "&redirect_uri=" + request.getParameter("redirect_uri")
+                + "&authenticators=" + getName() + ":" + "LOCAL" );
+    }
+
+    private String getAuthEndpointUrl(boolean isShowTnc, boolean isRegistering,boolean explicitScope) {
+
+        String loginPage;
+
+        if (isRegistering && isShowTnc) {
+
+            if (explicitScope) {
+                loginPage = configurationService.getDataHolder().getMobileConnectConfig().getAuthEndpointUrl() + Constants.ATTRIBUTE_CONSENT_JSP;
+            } else {
+                loginPage = configurationService.getDataHolder().getMobileConnectConfig().getAuthEndpointUrl() +
+                        Constants.CONSENT_JSP;
+            }
+        } else {
+
+            if (explicitScope) {
+                loginPage = configurationService.getDataHolder().getMobileConnectConfig().getAuthEndpointUrl() + Constants.ATTRIBUTE_CONSENT_JSP;
+            } else {
+                loginPage = ConfigurationFacade.getInstance().getAuthenticationEndpointURL();
+            }
+
+        }
+        return loginPage;
+    }
 }

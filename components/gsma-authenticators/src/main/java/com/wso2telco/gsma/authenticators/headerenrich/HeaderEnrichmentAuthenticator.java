@@ -323,6 +323,8 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
                     .updateAndPublishUserStatus((UserStatus) context.getParameter(Constants
                             .USER_STATUS_DATA_PUBLISHING_PARAM), DataPublisherUtil.UserState
                             .REDIRECT_TO_CONSENT_PAGE, "Redirecting to consent page");
+
+
               if(isattribute){
                 String clientId = context.getProperty(Constants.CLIENT_ID).toString();
                 attributeset = AttributeShareFactory.getAttributeSharable(operator, clientId).getAttributeShareDetails(context);
@@ -333,7 +335,7 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
             if(Boolean.parseBoolean( attributeset.get(Constants.IS_DISPLAYSCOPE))){
 
                 response.sendRedirect(response.encodeRedirectURL(loginPage)+ "?"+OAuthConstants.SESSION_DATA_KEY + "="
-                        + context.getContextIdentifier() + "&skipConsent=true&scope=" + attributeset.get(Constants.DISPLAY_SCOPES) + "&registering=" + Boolean.parseBoolean(Constants.IS_TNC_FORNEWUSE)
+                        + context.getContextIdentifier() + "&skipConsent=true&scope=" + attributeset.get(Constants.DISPLAY_SCOPES) + "&registering=" + Boolean.parseBoolean(attributeset.get(Constants.IS_TNC_FORNEWUSE))
                         + "&redirect_uri=" + request.getParameter("redirect_uri")
                         + "&authenticators=" + getName() + ":" + "LOCAL" );
             } else {
@@ -659,17 +661,20 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
 
         if (isRegistering && isShowTnc) {
 
-
-             if (explicitScope) {
-                    loginPage = configurationService.getDataHolder().getMobileConnectConfig().getAuthEndpointUrl() + Constants.ATTRIBUTE_CONSENT_JSP;
-                } else {
-                    loginPage = configurationService.getDataHolder().getMobileConnectConfig().getAuthEndpointUrl() +
-                    Constants.CONSENT_JSP;
-                }
-
-
+            if (explicitScope) {
+                loginPage = configurationService.getDataHolder().getMobileConnectConfig().getAuthEndpointUrl() + Constants.ATTRIBUTE_CONSENT_JSP;
+            } else {
+                loginPage = configurationService.getDataHolder().getMobileConnectConfig().getAuthEndpointUrl() +
+                        Constants.CONSENT_JSP;
+            }
         } else {
-            loginPage = ConfigurationFacade.getInstance().getAuthenticationEndpointURL();
+
+            if (explicitScope) {
+                loginPage = configurationService.getDataHolder().getMobileConnectConfig().getAuthEndpointUrl() + Constants.ATTRIBUTE_CONSENT_JSP;
+            } else {
+                loginPage = ConfigurationFacade.getInstance().getAuthenticationEndpointURL();
+            }
+
         }
         return loginPage;
     }
