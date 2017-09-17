@@ -49,7 +49,7 @@ public class PushServiceAPI {
     private static final String REFERENCE = "referenceID";
     private static final String ACR = "acr";
     private static final String SP_LOGO_URL = "spImgUrl";
-    private static final String FCM_KEY = "key=AIzaSyCIqO7iVo2djUVRIKh-DUe1kn3zODTzcDg";
+    private static final String FCM_KEY = "key=AIzaSyBTSjMwljXsp3pV7PrT7Ky8iO6j5IbaVC4";
     private static final String SUCCESS = "success";
     private static final String FAILURE = "failure";
 
