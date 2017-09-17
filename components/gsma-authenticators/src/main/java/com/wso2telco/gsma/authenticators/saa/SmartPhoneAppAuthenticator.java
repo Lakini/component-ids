@@ -129,6 +129,8 @@ public class SmartPhoneAppAuthenticator extends AbstractApplicationAuthenticator
 
             StringEntity postData = new StringEntity(new Gson().toJson(saaRequest));
 
+            log.info("SaaRequest:"+postData.getContent().toString());
+
             postDataToSaaServer(url, postData);
 
         } catch (IOException e) {
@@ -186,12 +188,19 @@ public class SmartPhoneAppAuthenticator extends AbstractApplicationAuthenticator
         IsRegisteredResponse isRegisteredResponse = new Gson()
                 .fromJson(EntityUtils.toString(httpResponse.getEntity()), IsRegisteredResponse.class);
 
+        log.info("isRegistered response:"+isRegisteredResponse.isRegistered());
+
         if (!isRegisteredResponse.isRegistered()) {
+            log.info("Registration Status:"+ isRegisteredResponse.isRegistered());
             throw new SaaException("msisdn [ " + msisdn + " ] is not registered in SAA server");
         }
     }
 
     private void postDataToSaaServer(String url, StringEntity postData) throws SaaException, IOException {
+
+        log.info("postDataTo Saa Server-url:"+url);
+        log.info("postDataTo Saa Server-postData:"+postData.toString());
+        log.info("postDataTo Saa Server-postData:"+postData.getContent().toString());
         HttpClient httpClient = new DefaultHttpClient();
         HttpPost httpPost = new HttpPost(url);
 

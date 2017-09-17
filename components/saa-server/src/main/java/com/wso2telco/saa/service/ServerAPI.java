@@ -260,6 +260,7 @@ public class ServerAPI {
                     responseMessage = AuthenticateClientBySAAClientStatus.STATUS_UPDATED.toString();
 
                 } else {
+                    dbConnection.updateMessageTable(refID, 'F');
                     failure = 1;
                     responseMessage = AuthenticateClientBySAAClientStatus.INVALID_REFERENCE_ID.toString();
                 }
