@@ -6,17 +6,16 @@ import com.wso2telco.core.config.service.ConfigurationService;
 import com.wso2telco.core.config.service.ConfigurationServiceImpl;
 import com.wso2telco.gsma.authenticators.Constants;
 import com.wso2telco.gsma.authenticators.DBUtil;
-import com.wso2telco.gsma.authenticators.attributeShare.internal.ConsentType;
 import com.wso2telco.gsma.authenticators.attributeShare.internal.UserConsentStatus;
 import com.wso2telco.gsma.authenticators.attributeShare.internal.ValidityType;
 import com.wso2telco.gsma.authenticators.dao.AttributeConfigDAO;
 import com.wso2telco.gsma.authenticators.dao.impl.AttributeConfigDAOimpl;
+import com.wso2telco.gsma.authenticators.internal.AuthenticatorEnum;
 import com.wso2telco.gsma.authenticators.model.UserConsentDetails;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.application.authentication.framework.config.ConfigurationFacade;
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
-import org.wso2.carbon.identity.oauth.common.OAuthConstants;
 
 import javax.naming.NamingException;
 import javax.servlet.http.HttpServletRequest;
@@ -43,7 +42,7 @@ public abstract class AbstractAttributeShare implements AttributeSharable {
 
         //Load scope related request optional parameters.
         scopeMap = new HashMap<String, ScopeDetailsConfig.Scope>();
-        List<ScopeDetailsConfig.Scope> scopes = scopeDetailsConfigs.getPremiumInfoScope();
+        List<ScopeDetailsConfig.Scope> scopes = scopeDetailsConfigs.getPremiumScopes();
 
         for (ScopeDetailsConfig.Scope sc : scopes) {
             scopeMap.put(sc.getName(), sc);
@@ -65,13 +64,13 @@ public abstract class AbstractAttributeShare implements AttributeSharable {
             String scope = scopeParam.getScope();
             Map<String, String> validityMap = getValiditeProcess(context, validityType, scope);
 
-            if (consentType.equalsIgnoreCase(ConsentType.EXPLICIT.name()) && "true".equalsIgnoreCase(validityMap.get("isConsent"))) {
+            if (consentType.equalsIgnoreCase(AuthenticatorEnum.ConsentType.EXPLICIT.name()) && "true".equalsIgnoreCase(validityMap.get("isConsent"))) {
                 explicitScopes = getScopestoDisplay(explicitScopes,scope);
                 if (validityMap.get("validityType").equalsIgnoreCase(ValidityType.LONG_LIVE.name())) {
                     longlivedScopes.add(scope);
                 }
 
-            } else if (consentType.equalsIgnoreCase(ConsentType.IMPLICIT.name()) && "true".equalsIgnoreCase(validityMap.get("isConsent"))){
+            } else if (consentType.equalsIgnoreCase(AuthenticatorEnum.ConsentType.IMPLICIT.name()) && "true".equalsIgnoreCase(validityMap.get("isConsent"))){
                 implicitScopes.add(scope);
             }
         }
@@ -190,11 +189,11 @@ public abstract class AbstractAttributeShare implements AttributeSharable {
         boolean isRegistering =false;
         boolean explicitScope = false;
 
-        String loginPage =getAuthEndpointUrl(isShowTns,isRegistering,explicitScope);
+       /* String loginPage =getAuthEndpointUrl(isShowTns,isRegistering,explicitScope);
         response.sendRedirect(response.encodeRedirectURL(loginPage)+ "?"+ OAuthConstants.SESSION_DATA_KEY + "="
                 + context.getContextIdentifier() + "&skipConsent=true&scope=" + "attributeset.get(Constants.DISPLAY_SCOPES)" + "&registering=" + Boolean.parseBoolean(attributeset.get(Constants.IS_TNC_FORNEWUSE))
                 + "&redirect_uri=" + request.getParameter("redirect_uri")
-                + "&authenticators=" + getName() + ":" + "LOCAL" );
+                + "&authenticators=" + getName() + ":" + "LOCAL" );*/
     }
 
     private String getAuthEndpointUrl(boolean isShowTnc, boolean isRegistering,boolean explicitScope) {

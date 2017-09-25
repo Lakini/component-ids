@@ -27,6 +27,7 @@ import com.wso2telco.gsma.authenticators.Constants;
 import com.wso2telco.gsma.authenticators.IPRangeChecker;
 import com.wso2telco.gsma.authenticators.attributeShare.AttributeShareFactory;
 import com.wso2telco.gsma.authenticators.attributeShare.TrustedSP2;
+import com.wso2telco.gsma.authenticators.internal.AuthenticatorEnum;
 import com.wso2telco.gsma.authenticators.util.*;
 import com.wso2telco.gsma.manager.client.ClaimManagementClient;
 import com.wso2telco.gsma.manager.client.LoginAdminServiceClient;
@@ -135,6 +136,12 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
                                 "started");
         if (context.isLogoutRequest()) {
             return AuthenticatorFlowStatus.SUCCESS_COMPLETED;
+        } else if(AuthenticatorEnum.TrustedStatus.FULLY_TRUSTED.toString().equalsIgnoreCase(context.getProperty(Constants.TRUSTED_STATUS).toString())){
+           log.info("trusted Sps");
+            AuthenticationContextHelper.setSubject(context, context.getProperty(Constants.MSISDN).toString());
+            context.setProperty(Constants.TERMINATE_BY_REMOVE_FOLLOWING_STEPS, "true");
+            return AuthenticatorFlowStatus.SUCCESS_COMPLETED;
+
         } else {
             return this.processRequest(request, response, context);
         }
@@ -154,7 +161,7 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
 
                 if(isattribute){
                 String clientId = context.getProperty(Constants.CLIENT_ID).toString();
-                attributeset = AttributeShareFactory.getAttributeSharable(operator, clientId).getAttributeShareDetails(context);
+                attributeset = AttributeShareFactory.getAttributeSharable(context.getProperty(Constants.TRUSTED_STATUS).toString()).getAttributeShareDetails(context);
             }
 
             String loginPage = getAuthEndpointUrl(false, isRegistering,Boolean.parseBoolean( attributeset.get(Constants.IS_DISPLAYSCOPE)));
@@ -327,7 +334,7 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
 
               if(isattribute){
                 String clientId = context.getProperty(Constants.CLIENT_ID).toString();
-                attributeset = AttributeShareFactory.getAttributeSharable(operator, clientId).getAttributeShareDetails(context);
+                attributeset = AttributeShareFactory.getAttributeSharable(context.getProperty(Constants.TRUSTED_STATUS).toString()).getAttributeShareDetails(context);
             }
 
             String loginPage = getAuthEndpointUrl(showTnC, isRegistering,Boolean.parseBoolean( attributeset.get(Constants.IS_DISPLAYSCOPE)));
@@ -367,6 +374,13 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
     protected void processAuthenticationResponse(HttpServletRequest request,
                                                  HttpServletResponse response, AuthenticationContext context)
             throws AuthenticationFailedException {
+
+        if(AuthenticatorEnum.TrustedStatus.FULLY_TRUSTED.toString().equalsIgnoreCase(context.getProperty(Constants.TRUSTED_STATUS).toString())) {
+
+
+            AuthenticationContextHelper.setSubject(context, context.getProperty(Constants.MSISDN).toString());
+            context.setProperty(Constants.TERMINATE_BY_REMOVE_FOLLOWING_STEPS, "true");
+        }
 
         UserStatus userStatus = (UserStatus) context.getParameter(Constants.USER_STATUS_DATA_PUBLISHING_PARAM);
 
@@ -639,7 +653,13 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
     private void terminateAuthentication(AuthenticationContext context) throws AuthenticationFailedException {
         log.info("User has terminated the authentication flow");
 
-        context.setProperty(Constants.TERMINATE_BY_REMOVE_FOLLOWING_STEPS, "true");
+
+       /* if(AuthenticatorEnum.TrustedStatus.FULLY_TRUSTED.toString().equalsIgnoreCase(context.getProperty(Constants.TRUSTED_STATUS).toString())){
+            context.setProperty(Constants.IS_TERMINATED, true);
+        } else {*/
+       // context.setProperty(Constants.IS_TERMINATED, true);
+            context.setProperty(Constants.TERMINATE_BY_REMOVE_FOLLOWING_STEPS, "true");
+       //
         throw new AuthenticationFailedException("Authenticator is terminated");
     }
 
