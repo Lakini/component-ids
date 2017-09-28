@@ -136,12 +136,6 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
                                 "started");
         if (context.isLogoutRequest()) {
             return AuthenticatorFlowStatus.SUCCESS_COMPLETED;
-        } else if(AuthenticatorEnum.TrustedStatus.FULLY_TRUSTED.toString().equalsIgnoreCase(context.getProperty(Constants.TRUSTED_STATUS).toString())){
-           log.info("trusted Sps");
-            AuthenticationContextHelper.setSubject(context, context.getProperty(Constants.MSISDN).toString());
-            context.setProperty(Constants.TERMINATE_BY_REMOVE_FOLLOWING_STEPS, "true");
-            return AuthenticatorFlowStatus.SUCCESS_COMPLETED;
-
         } else {
             return this.processRequest(request, response, context);
         }
