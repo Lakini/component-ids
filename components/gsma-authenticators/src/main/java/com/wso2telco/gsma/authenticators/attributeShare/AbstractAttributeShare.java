@@ -14,12 +14,9 @@ import com.wso2telco.gsma.authenticators.internal.AuthenticatorEnum;
 import com.wso2telco.gsma.authenticators.model.UserConsentDetails;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.wso2.carbon.identity.application.authentication.framework.config.ConfigurationFacade;
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
 
 import javax.naming.NamingException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -41,7 +38,7 @@ public abstract class AbstractAttributeShare implements AttributeSharable {
         scopeDetailsConfigs = configurationService.getDataHolder().getScopeDetailsConfig();
 
         //Load scope related request optional parameters.
-        scopeMap = new HashMap<String, ScopeDetailsConfig.Scope>();
+        scopeMap = new HashMap<>();
         List<ScopeDetailsConfig.Scope> scopes = scopeDetailsConfigs.getPremiumScopes();
 
         for (ScopeDetailsConfig.Scope sc : scopes) {
@@ -49,7 +46,7 @@ public abstract class AbstractAttributeShare implements AttributeSharable {
         }
     }
 
-    public Map<String, List<String>> getAttributeMap(AuthenticationContext context) throws Exception {
+    public Map<String, List<String>> getAttributeMap(AuthenticationContext context) throws SQLException, NamingException {
 
         List<String> explicitScopes = new ArrayList();
         List<String> implicitScopes = new ArrayList();
@@ -64,13 +61,13 @@ public abstract class AbstractAttributeShare implements AttributeSharable {
             String scope = scopeParam.getScope();
             Map<String, String> validityMap = getValiditeProcess(context, validityType, scope);
 
-            if (consentType.equalsIgnoreCase(AuthenticatorEnum.ConsentType.EXPLICIT.name()) && "true".equalsIgnoreCase(validityMap.get("isConsent"))) {
+            if (consentType.equalsIgnoreCase(AuthenticatorEnum.ConsentType.EXPLICIT.name()) && "true".equalsIgnoreCase(validityMap.get(Constants.IS_CONSENT))) {
                 explicitScopes = getScopestoDisplay(explicitScopes,scope);
-                if (validityMap.get("validityType").equalsIgnoreCase(ValidityType.LONG_LIVE.name())) {
+                if (validityMap.get(Constants.VALIDITY_TYPE).equalsIgnoreCase(ValidityType.LONG_LIVE.name())) {
                     longlivedScopes.add(scope);
                 }
 
-            } else if (consentType.equalsIgnoreCase(AuthenticatorEnum.ConsentType.IMPLICIT.name()) && "true".equalsIgnoreCase(validityMap.get("isConsent"))){
+            } else if (consentType.equalsIgnoreCase(AuthenticatorEnum.ConsentType.IMPLICIT.name()) && "true".equalsIgnoreCase(validityMap.get(Constants.IS_CONSENT))){
                 implicitScopes.add(scope);
             }
         }
@@ -83,8 +80,7 @@ public abstract class AbstractAttributeShare implements AttributeSharable {
         return scopesList;
     }
 
-
-    private UserConsentDetails getUserConsentDetails(AuthenticationContext context, String scope) throws Exception {
+    private UserConsentDetails getUserConsentDetails(AuthenticationContext context, String scope) throws SQLException, NamingException {
         AttributeConfigDAO attributeConfigDAO = new AttributeConfigDAOimpl();
         UserConsentDetails userConsentDetails = new UserConsentDetails();
         userConsentDetails.setConsumerKey(context.getProperty(Constants.CLIENT_ID).toString());
@@ -95,36 +91,36 @@ public abstract class AbstractAttributeShare implements AttributeSharable {
 
     }
 
-    private Map<String, String> getValiditeProcess(AuthenticationContext context, String validityTyp, String scope) throws Exception {
+    private Map<String, String> getValiditeProcess(AuthenticationContext context, String validityTyp, String scope) throws SQLException, NamingException {
 
         ValidityType validityType = ValidityType.get(validityTyp);
         Map<String, String> valityMap = new HashMap();
         switch (validityType) {
 
             case TRANSACTIONAL:
-                valityMap.put("validityType", ValidityType.TRANSACTIONAL.name());
-                valityMap.put("isConsent", "true");
+                valityMap.put(Constants.VALIDITY_TYPE, ValidityType.TRANSACTIONAL.name());
+                valityMap.put(Constants.IS_CONSENT, "true");
                 return valityMap;
 
             case LONG_LIVE:
 
-                valityMap.put("validityType", ValidityType.LONG_LIVE.name());
+                valityMap.put(Constants.VALIDITY_TYPE, ValidityType.LONG_LIVE.name());
                 if (isLongLiveConsent(context, scope)) {
-                    valityMap.put("isConsent", "true");
+                    valityMap.put(Constants.IS_CONSENT, "true");
                 } else {
-                    valityMap.put("isConsent", "false");
+                    valityMap.put(Constants.IS_CONSENT, "false");
                 }
                 return valityMap;
 
             default:
-                valityMap.put("validityType", ValidityType.UNDEFINED.name());
-                valityMap.put("isConsent", "false");
+                valityMap.put(Constants.VALIDITY_TYPE, ValidityType.UNDEFINED.name());
+                valityMap.put(Constants.IS_CONSENT, "false");
                 return valityMap;
         }
 
     }
 
-    private boolean isLongLiveConsent(AuthenticationContext context, String scope) throws Exception {
+    private boolean isLongLiveConsent(AuthenticationContext context, String scope) throws SQLException, NamingException {
 
         boolean isConsent = false;
 
@@ -151,16 +147,11 @@ public abstract class AbstractAttributeShare implements AttributeSharable {
             }
 
 
-        } catch (SQLException e) {
+        } catch (SQLException|NamingException e) {
             log.debug("error occurred while accessing the database table" + e);
-
-        } catch (NamingException ex) {
-
 
         } catch (ParseException e) {
             log.debug("error occurred while formatting the date");
-        } catch (Exception e) {
-
         }
         return isConsent;
     }
@@ -169,7 +160,7 @@ public abstract class AbstractAttributeShare implements AttributeSharable {
 
 
         List<String> consentAttribute = attributeSet;
-        List<String> displayAttributeSet = new ArrayList<>();
+        List<String> displayAttributeSet ;
 
         displayAttributeSet = scopeMap.get(scope).getDisplayAttributes();
         for (int j = 0; j < displayAttributeSet.size(); j++) {
@@ -178,45 +169,5 @@ public abstract class AbstractAttributeShare implements AttributeSharable {
             }
         }
         return consentAttribute;
-    }
-
-    public abstract Map<String,String> getAttributeShareDetails(AuthenticationContext context) throws Exception;
-
-    public void getConsentFromUser(HttpServletRequest request,
-                                   HttpServletResponse response, AuthenticationContext context) throws Exception {
-
-        boolean isShowTns =false;
-        boolean isRegistering =false;
-        boolean explicitScope = false;
-
-       /* String loginPage =getAuthEndpointUrl(isShowTns,isRegistering,explicitScope);
-        response.sendRedirect(response.encodeRedirectURL(loginPage)+ "?"+ OAuthConstants.SESSION_DATA_KEY + "="
-                + context.getContextIdentifier() + "&skipConsent=true&scope=" + "attributeset.get(Constants.DISPLAY_SCOPES)" + "&registering=" + Boolean.parseBoolean(attributeset.get(Constants.IS_TNC_FORNEWUSE))
-                + "&redirect_uri=" + request.getParameter("redirect_uri")
-                + "&authenticators=" + getName() + ":" + "LOCAL" );*/
-    }
-
-    private String getAuthEndpointUrl(boolean isShowTnc, boolean isRegistering,boolean explicitScope) {
-
-        String loginPage;
-
-        if (isRegistering && isShowTnc) {
-
-            if (explicitScope) {
-                loginPage = configurationService.getDataHolder().getMobileConnectConfig().getAuthEndpointUrl() + Constants.ATTRIBUTE_CONSENT_JSP;
-            } else {
-                loginPage = configurationService.getDataHolder().getMobileConnectConfig().getAuthEndpointUrl() +
-                        Constants.CONSENT_JSP;
-            }
-        } else {
-
-            if (explicitScope) {
-                loginPage = configurationService.getDataHolder().getMobileConnectConfig().getAuthEndpointUrl() + Constants.ATTRIBUTE_CONSENT_JSP;
-            } else {
-                loginPage = ConfigurationFacade.getInstance().getAuthenticationEndpointURL();
-            }
-
-        }
-        return loginPage;
     }
 }
