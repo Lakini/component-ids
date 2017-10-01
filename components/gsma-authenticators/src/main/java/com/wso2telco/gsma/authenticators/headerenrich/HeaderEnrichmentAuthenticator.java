@@ -158,8 +158,8 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
                 if (!isRegistering && isattribute && Constants.NO.equalsIgnoreCase(context.getProperty(Constants.IS_CONSENTED).toString())) {
 
                     attributeset = AttributeShareFactory.getAttributeSharable(context.getProperty(Constants.TRUSTED_STATUS).toString()).getAttributeShareDetails(context);
-                    boolean flowStatus = Boolean.getBoolean(attributeset.get(Constants.IS_AUNTHENTICATION_CONTINUE));
-                    isDisplayScopes = Boolean.parseBoolean( attributeset.get(Constants.IS_DISPLAYSCOPE));
+                    boolean flowStatus = Boolean.valueOf(attributeset.get(Constants.IS_AUNTHENTICATION_CONTINUE));
+                    isDisplayScopes = Boolean.parseBoolean( attributeset.get(Constants.IS_DISPLAYSCOPE).toString());
 
                     if(flowStatus){
 
