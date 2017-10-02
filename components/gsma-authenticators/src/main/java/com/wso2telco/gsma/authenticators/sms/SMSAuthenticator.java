@@ -248,9 +248,12 @@ public class SMSAuthenticator extends AbstractApplicationAuthenticator
                 boolean isRegistering = (boolean) context.getProperty(Constants.IS_REGISTERING);
                 boolean isStatusUpdate =  (boolean)context.getProperty(Constants.IS_STATUS_TO_CHANGE);
                 boolean isAttributeScope = (Boolean)context.getProperty(Constants.IS_ATTRIBUTE_SHARING_SCOPE);
+                String spType = context.getProperty(Constants.TRUSTED_STATUS).toString();
+                String attrShareType = context.getProperty(Constants.ATTRSHARE_SCOPE_TYPE).toString();
+
                 if (isRegistering || isStatusUpdate) {
                     UserProfileManager userProfileManager = new UserProfileManager();
-                    userProfileManager.createUserProfileLoa2(msisdn, operator, isAttributeScope);
+                    userProfileManager.createUserProfileLoa2(msisdn, operator, isAttributeScope,spType,attrShareType);
 
                     MobileConnectConfig.SMSConfig smsConfig = configurationService.getDataHolder().getMobileConnectConfig().getSmsConfig();
                     if (!smsConfig.getWelcomeMessageDisabled()) {

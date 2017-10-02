@@ -2,6 +2,7 @@ package com.wso2telco.gsma.authenticators.util;
 
 import com.wso2telco.core.config.DataHolder;
 import com.wso2telco.gsma.authenticators.Constants;
+import com.wso2telco.gsma.authenticators.internal.AuthenticatorEnum;
 import com.wso2telco.gsma.manager.client.LoginAdminServiceClient;
 import com.wso2telco.gsma.manager.client.RemoteUserStoreServiceAdminClient;
 import com.wso2telco.gsma.manager.client.UserRegistrationAdminServiceClient;
@@ -11,6 +12,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.authenticator.stub.LoginAuthenticationExceptionException;
 import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
+import org.wso2.carbon.identity.base.IdentityException;
 import org.wso2.carbon.identity.user.registration.stub.UserRegistrationAdminServiceIdentityException;
 import org.wso2.carbon.identity.user.registration.stub.dto.UserDTO;
 import org.wso2.carbon.identity.user.registration.stub.dto.UserFieldDTO;
@@ -63,13 +65,13 @@ public class UserProfileManager {
         init();
     }
 
-    public boolean createUserProfileLoa2(String username, String operator, String scope) throws
+    public boolean createUserProfileLoa2(String username, String operator, boolean isAttributeScope,String spType,String attrbShareType) throws
             UserRegistrationAdminServiceIdentityException, RemoteException {
         boolean isNewUser = false;
         try {
             if (AdminServiceUtil.isUserExists(username)) {
                 try {
-                    updateUserStatus(username);
+                    updateUserStatus(username,isAttributeScope,spType,attrbShareType);
                 } catch (RemoteUserStoreManagerServiceUserStoreExceptionException e) {
                     log.error("RemoteUserStoreManagerServiceUserStoreExceptionException : " + e.getMessage());
                 }
@@ -110,7 +112,12 @@ public class UserProfileManager {
                     } else if (MOBILE_CLAIM_NAME.equalsIgnoreCase(userFieldDTOs[count].getClaimUri())) {
                         userFieldDTOs[count].setFieldValue(username);
                     } else if (STATUS_CLAIM_NAME.equalsIgnoreCase(userFieldDTOs[count].getClaimUri())) {
-                        userFieldDTOs[count].setFieldValue(STATUS_ACTIVE);
+                        if (isAttributeScope && spType.equalsIgnoreCase(AuthenticatorEnum.TrustedStatus.UNTRUSTED.name())&& attrbShareType.equalsIgnoreCase(AuthenticatorEnum.AttributeShareScopeTypes.PROVISIONING_SCOPE.getAttributeShareScopeTypes())) {
+                            userFieldDTOs[count].setFieldValue(STATUS_ACTIVE);
+                        } else if (isAttributeScope) {
+                            userFieldDTOs[count].setFieldValue(STATUS_PARTIALLY_ACTIVE);
+                        } else
+                            userFieldDTOs[count].setFieldValue(STATUS_ACTIVE);
                     } else {
                         userFieldDTOs[count].setFieldValue("");
                     }
@@ -147,13 +154,13 @@ public class UserProfileManager {
     }
 
     public boolean createUserProfileLoa3(String username, String operator, String challengeAnswer1,
-                                         String challengeAnswer2, String pin) throws
+                                         String challengeAnswer2, String pin,boolean isAttributeScope,String spType,String attrbShareType) throws
             UserRegistrationAdminServiceIdentityException, RemoteException {
         boolean isNewUser = false;
         try {
             if (AdminServiceUtil.isUserExists(username)) {
                 try {
-                    updateUserStatus(username);
+                    updateUserStatus(username,isAttributeScope,spType,attrbShareType);
                 } catch (RemoteUserStoreManagerServiceUserStoreExceptionException e) {
                     log.error("RemoteUserStoreManagerServiceUserStoreExceptionException : " + e.getMessage());
                 }
@@ -190,10 +197,16 @@ public class UserProfileManager {
                         } else if (UserProfileClaimsConstant.PIN.equalsIgnoreCase(userFieldDTOs[count].getClaimUri())) {
                             userFieldDTOs[count].setFieldValue(getHashValue(pin));
                         } else if (STATUS_CLAIM_NAME.equalsIgnoreCase(userFieldDTOs[count].getClaimUri())) {
-                            userFieldDTOs[count].setFieldValue(STATUS_ACTIVE);
-                        } else if (REG_MODE_CLAIM_NAME.equalsIgnoreCase(userFieldDTOs[count].getClaimUri())) {
+                            if (isAttributeScope && spType.equalsIgnoreCase(AuthenticatorEnum.TrustedStatus.UNTRUSTED.name())&& attrbShareType.equalsIgnoreCase(AuthenticatorEnum.AttributeShareScopeTypes.PROVISIONING_SCOPE.getAttributeShareScopeTypes())){
+                                userFieldDTOs[count].setFieldValue(STATUS_ACTIVE);
+                            } else if(isAttributeScope){
+                                userFieldDTOs[count].setFieldValue(STATUS_PARTIALLY_ACTIVE);
+                            }
+                            else
+                                userFieldDTOs[count].setFieldValue(STATUS_ACTIVE);
+                       } else if (REG_MODE_CLAIM_NAME.equalsIgnoreCase(userFieldDTOs[count].getClaimUri())) {
                             userFieldDTOs[count].setFieldValue(REG_MODE_ONLINE);
-                        } else {
+                       }else {
                             userFieldDTOs[count].setFieldValue("");
                         }
                         if (log.isDebugEnabled()) {
@@ -471,56 +484,24 @@ public class UserProfileManager {
         }
     }
 
-//    public void init(){
-//         /* reading admin url from application properties */
-//        LoginAdminServiceClient lAdmin;
-//        try {
-//            lAdmin = new LoginAdminServiceClient(DataHolder.getInstance().getMobileConnectConfig().getAdminUrl());
-//        /*
-//		 * getting session cookie by sending username and password to the
-//		 * authenticate admin service
-//		 */
-//            String sessionCookie = lAdmin.authenticate(DataHolder.getInstance().getMobileConnectConfig()
-// .getAdminUrl(),
-//                    DataHolder.getInstance().getMobileConnectConfig().getAdminPassword());
-//		/* using the session cookie as a key getting user store admin client */
-//            remoteUserStoreServiceAdminClient = new RemoteUserStoreServiceAdminClient(
-//                    DataHolder.getInstance().getMobileConnectConfig().getAdminUrl(), sessionCookie);
-//
-//        } catch (AxisFault axisFault) {
-//            axisFault.printStackTrace();
-//        } catch (RemoteException e) {
-//            e.printStackTrace();
-//        } catch (LoginAuthenticationExceptionException e) {
-//            e.printStackTrace();
-//        }
-//    }
-
     /**
      * update user profile status
      *
      * @throws RemoteUserStoreManagerServiceUserStoreExceptionException
-     * @throws RemoteException                                          fieldValues, userName
+     * @throws RemoteException                                          fieldValues, userName,isAttributeScope
      */
-
-    private void updateUserStatus(String userName)
+    private void updateUserStatus(String userName,boolean isAttributeScope,String spType,String attrbShareType)
             throws RemoteException, RemoteUserStoreManagerServiceUserStoreExceptionException {
 
-<<<<<<< 9694fc4a687706fbeb88787d364c1986353c1bb9
-		/* updating loa claim for status */
-
-        remoteUserStoreServiceAdminClient.setUserClaim(userName, STATUS_CLAIM_NAME, STATUS_ACTIVE,
-                UserCoreConstants.DEFAULT_PROFILE);
-        remoteUserStoreServiceAdminClient.setUserClaim(userName, REG_MODE_CLAIM_NAME, REG_MODE_ONLINE,
-                UserCoreConstants.DEFAULT_PROFILE);
-
-=======
         String userStatus;
             try {
                 userStatus = AdminServiceUtil.getUserStatus(userName);
-                if(isAttributeScope) {
+                if (isAttributeScope && spType.equalsIgnoreCase(AuthenticatorEnum.TrustedStatus.UNTRUSTED.name())&& attrbShareType.equalsIgnoreCase(AuthenticatorEnum.AttributeShareScopeTypes.PROVISIONING_SCOPE.getAttributeShareScopeTypes())){
+                    updateUserStatus(userStatus,userName,STATUS_ACTIVE);
+                } else if(isAttributeScope){
                     updateUserStatus(userStatus,userName,STATUS_PARTIALLY_ACTIVE);
-                }else{
+                }
+                else{
                     updateUserStatus(userStatus,userName,STATUS_ACTIVE);
                 }
 
@@ -545,7 +526,5 @@ public class UserProfileManager {
         } catch (RemoteUserStoreManagerServiceUserStoreExceptionException e) {
             log.error("RemoteUserStoreManagerServiceUserStoreExceptionException- " + userName + ":" + e.getMessage());
         }
->>>>>>> [IDSDEV-621] Updated the user registartion flow and user status for INACTIVE,ACTIVE and PARTIALLY_ACTIVE
     }
-
 }
