@@ -346,7 +346,7 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
 
             String loginPage = getAuthEndpointUrl(showTnC, isRegistering,Boolean.parseBoolean( attributeset.get(Constants.IS_DISPLAYSCOPE)));
 
-            if(Boolean.valueOf(attributeset.get(Constants.IS_AUNTHENTICATION_CONTINUE))){
+            if(Boolean.valueOf(attributeset.get(Constants.IS_AUNTHENTICATION_CONTINUE)) || Boolean.valueOf(context.getProperty(Constants.AUTHENTICATED_USER).toString())){
                 throw new AuthenticationFailedException("Authentication terminate");
 
             }else  if(Boolean.parseBoolean( attributeset.get(Constants.IS_DISPLAYSCOPE))){
