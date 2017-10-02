@@ -215,13 +215,13 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
                     initiateAuthenticationRequest(request, response, context);
                     return AuthenticatorFlowStatus.INCOMPLETE;
                 } else {
-                    if(context.getProperty(Constants.TRUSTED_STATUS).toString().equalsIgnoreCase(AuthenticatorEnum.TrustedStatus.TRUSTED.name())){
+                    if(Boolean.valueOf(context.getProperty(Constants.AUTHENTICATED_USER).toString())){
                         return AuthenticatorFlowStatus.SUCCESS_COMPLETED;
                     }
                     throw e;
                 }
             } catch (Exception e){
-                if(context.getProperty(Constants.TRUSTED_STATUS).toString().equalsIgnoreCase(AuthenticatorEnum.TrustedStatus.FULLY_TRUSTED.name())){
+                if(Boolean.valueOf(context.getProperty(Constants.AUTHENTICATED_USER).toString())){
                     return AuthenticatorFlowStatus.SUCCESS_COMPLETED;
                 }
                 log.debug("error occurred while doing the attribute share ");
@@ -231,7 +231,7 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
             try {
                 initiateAuthenticationRequest(request, response, context);
             } catch (Exception e) {
-                if (context.getProperty(Constants.TRUSTED_STATUS).toString().equalsIgnoreCase(AuthenticatorEnum.TrustedStatus.FULLY_TRUSTED.name())) {
+                if (Boolean.valueOf(context.getProperty(Constants.AUTHENTICATED_USER).toString())) {
                     return AuthenticatorFlowStatus.SUCCESS_COMPLETED;
                 }
             }
@@ -350,10 +350,7 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
 
             }else  if(Boolean.parseBoolean( attributeset.get(Constants.IS_DISPLAYSCOPE))){
 
-                response.sendRedirect(response.encodeRedirectURL(loginPage)+ "?"+OAuthConstants.SESSION_DATA_KEY + "="
-                        + context.getContextIdentifier() + "&skipConsent=true&scope=" + attributeset.get(Constants.DISPLAY_SCOPES) + "&registering=" + false
-                        + "&redirect_uri=" + request.getParameter("redirect_uri")
-                        + "&authenticators=" + getName() + ":" + "LOCAL" );
+                getConsentFromUser(request,response,context,attributeset);
             } else {
 
                 response.sendRedirect(response.encodeRedirectURL(loginPage + ("?" + queryParams))
@@ -866,12 +863,11 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
             } catch (Exception e){
                     throw new  AuthenticationFailedException("error occurred while persiste data");
                 }
-
         }
-
 
         if(AuthenticatorEnum.TrustedStatus.TRUSTED.toString().equalsIgnoreCase(context.getProperty(Constants.TRUSTED_STATUS).toString())) {
             AuthenticationContextHelper.setSubject(context, context.getProperty(Constants.MSISDN).toString());
+            context.setProperty(Constants.AUTHENTICATED_USER,"true");
             context.setProperty(Constants.TERMINATE_BY_REMOVE_FOLLOWING_STEPS, "true");
             throw new AuthenticationFailedException("Terminate authentication flow");
         }
@@ -883,7 +879,7 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
         String loginPage = getAuthEndpointUrl(false, false,Boolean.parseBoolean( attributeset.get(Constants.IS_DISPLAYSCOPE)));
         try {
             response.sendRedirect(response.encodeRedirectURL(loginPage)+ "?"+OAuthConstants.SESSION_DATA_KEY + "="
-                    + context.getContextIdentifier() + "&skipConsent=true&scope=" + attributeset.get(Constants.DISPLAY_SCOPES) + "&registering=" + false
+                    + context.getContextIdentifier() + "&skipConsent=true&scope=" + attributeset.get(Constants.DISPLAY_SCOPES) + "&registering=" + attributeset.get(Constants.IS_TNC)
                     + "&redirect_uri=" + request.getParameter("redirect_uri")
                     + "&authenticators=" + getName() + ":" + "LOCAL" );
         } catch (IOException e){
