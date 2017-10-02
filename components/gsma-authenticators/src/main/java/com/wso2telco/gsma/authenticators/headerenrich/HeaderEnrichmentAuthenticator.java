@@ -427,6 +427,8 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
             boolean isRegistering = (boolean) context.getProperty(Constants.IS_REGISTERING);
             boolean isAttributeScope = (Boolean)context.getProperty(Constants.IS_ATTRIBUTE_SHARING_SCOPE);
             boolean isStatusUpdate =  (boolean)context.getProperty(Constants.IS_STATUS_TO_CHANGE);
+            String spType = context.getProperty(Constants.TRUSTED_STATUS).toString();
+            String attrShareType = context.getProperty(Constants.ATTRSHARE_SCOPE_TYPE).toString();
 
             boolean validOperator = isValidOperator(request, context, msisdn, operator, userStatus);
 
@@ -440,7 +442,7 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
                     if (isRegistering || isStatusUpdate) {
                         // authenticators from step map
                         try {
-                            new UserProfileManager().createUserProfileLoa2(msisdn, operator,isAttributeScope);
+                            new UserProfileManager().createUserProfileLoa2(msisdn, operator,isAttributeScope,spType,attrShareType);
 
                             MobileConnectConfig.SMSConfig smsConfig = configurationService.getDataHolder().getMobileConnectConfig().getSmsConfig();
                             if (!smsConfig.getWelcomeMessageDisabled()) {

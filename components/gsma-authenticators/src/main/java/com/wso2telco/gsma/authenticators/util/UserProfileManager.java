@@ -2,6 +2,7 @@ package com.wso2telco.gsma.authenticators.util;
 
 import com.wso2telco.core.config.DataHolder;
 import com.wso2telco.gsma.authenticators.Constants;
+import com.wso2telco.gsma.authenticators.internal.AuthenticatorEnum;
 import com.wso2telco.gsma.manager.client.LoginAdminServiceClient;
 import com.wso2telco.gsma.manager.client.RemoteUserStoreServiceAdminClient;
 import com.wso2telco.gsma.manager.client.UserRegistrationAdminServiceClient;
@@ -60,13 +61,13 @@ public class UserProfileManager {
         init();
     }
 
-    public boolean createUserProfileLoa2(String username, String operator, boolean isAttributeScope) throws
+    public boolean createUserProfileLoa2(String username, String operator, boolean isAttributeScope,String spType,String attrbShareType) throws
             UserRegistrationAdminServiceIdentityException, RemoteException {
         boolean isNewUser = false;
         try {
             if (AdminServiceUtil.isUserExists(username)) {
                 try {
-                    updateUserStatus(username,isAttributeScope);
+                    updateUserStatus(username,isAttributeScope,spType,attrbShareType);
                 } catch (RemoteUserStoreManagerServiceUserStoreExceptionException e) {
                     log.error("RemoteUserStoreManagerServiceUserStoreExceptionException : " + e.getMessage());
                 }
@@ -107,10 +108,11 @@ public class UserProfileManager {
                     } else if (MOBILE_CLAIM_NAME.equalsIgnoreCase(userFieldDTOs[count].getClaimUri())) {
                         userFieldDTOs[count].setFieldValue(username);
                     } else if (STATUS_CLAIM_NAME.equalsIgnoreCase(userFieldDTOs[count].getClaimUri())) {
-                        if(isAttributeScope){
+                        if (isAttributeScope && spType.equalsIgnoreCase(AuthenticatorEnum.TrustedStatus.UNTRUSTED.name())&& attrbShareType.equalsIgnoreCase(AuthenticatorEnum.AttributeShareScopeTypes.PROVISIONING_SCOPE.getAttributeShareScopeTypes())) {
+                            userFieldDTOs[count].setFieldValue(STATUS_ACTIVE);
+                        } else if (isAttributeScope) {
                             userFieldDTOs[count].setFieldValue(STATUS_PARTIALLY_ACTIVE);
-                        }
-                        else
+                        } else
                             userFieldDTOs[count].setFieldValue(STATUS_ACTIVE);
                     } else {
                         userFieldDTOs[count].setFieldValue("");
@@ -148,13 +150,13 @@ public class UserProfileManager {
     }
 
     public boolean createUserProfileLoa3(String username, String operator, String challengeAnswer1,
-                                         String challengeAnswer2, String pin,boolean isAttributeScope) throws
+                                         String challengeAnswer2, String pin,boolean isAttributeScope,String spType,String attrbShareType) throws
             UserRegistrationAdminServiceIdentityException, RemoteException {
         boolean isNewUser = false;
         try {
             if (AdminServiceUtil.isUserExists(username)) {
                 try {
-                    updateUserStatus(username,isAttributeScope);
+                    updateUserStatus(username,isAttributeScope,spType,attrbShareType);
                 } catch (RemoteUserStoreManagerServiceUserStoreExceptionException e) {
                     log.error("RemoteUserStoreManagerServiceUserStoreExceptionException : " + e.getMessage());
                 }
@@ -191,7 +193,9 @@ public class UserProfileManager {
                         } else if (UserProfileClaimsConstant.PIN.equalsIgnoreCase(userFieldDTOs[count].getClaimUri())) {
                             userFieldDTOs[count].setFieldValue(getHashValue(pin));
                         } else if (STATUS_CLAIM_NAME.equalsIgnoreCase(userFieldDTOs[count].getClaimUri())) {
-                            if(isAttributeScope){
+                            if (isAttributeScope && spType.equalsIgnoreCase(AuthenticatorEnum.TrustedStatus.UNTRUSTED.name())&& attrbShareType.equalsIgnoreCase(AuthenticatorEnum.AttributeShareScopeTypes.PROVISIONING_SCOPE.getAttributeShareScopeTypes())){
+                                userFieldDTOs[count].setFieldValue(STATUS_ACTIVE);
+                            } else if(isAttributeScope){
                                 userFieldDTOs[count].setFieldValue(STATUS_PARTIALLY_ACTIVE);
                             }
                             else
@@ -480,15 +484,18 @@ public class UserProfileManager {
      * @throws RemoteUserStoreManagerServiceUserStoreExceptionException
      * @throws RemoteException                                          fieldValues, userName,isAttributeScope
      */
-    private void updateUserStatus(String userName,boolean isAttributeScope)
+    private void updateUserStatus(String userName,boolean isAttributeScope,String spType,String attrbShareType)
             throws RemoteException, RemoteUserStoreManagerServiceUserStoreExceptionException {
 
         String userStatus;
             try {
                 userStatus = AdminServiceUtil.getUserStatus(userName);
-                if(isAttributeScope) {
+                if (isAttributeScope && spType.equalsIgnoreCase(AuthenticatorEnum.TrustedStatus.UNTRUSTED.name())&& attrbShareType.equalsIgnoreCase(AuthenticatorEnum.AttributeShareScopeTypes.PROVISIONING_SCOPE.getAttributeShareScopeTypes())){
+                    updateUserStatus(userStatus,userName,STATUS_ACTIVE);
+                } else if(isAttributeScope){
                     updateUserStatus(userStatus,userName,STATUS_PARTIALLY_ACTIVE);
-                }else{
+                }
+                else{
                     updateUserStatus(userStatus,userName,STATUS_ACTIVE);
                 }
 
