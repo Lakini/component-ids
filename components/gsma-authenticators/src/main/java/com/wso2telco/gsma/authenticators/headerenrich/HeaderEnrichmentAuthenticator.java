@@ -24,6 +24,7 @@ import com.wso2telco.core.sp.config.utils.exception.DataAccessException;
 import com.wso2telco.gsma.authenticators.BaseApplicationAuthenticator;
 import com.wso2telco.gsma.authenticators.Constants;
 import com.wso2telco.gsma.authenticators.IPRangeChecker;
+import com.wso2telco.gsma.authenticators.attributeShare.AbstractAttributeShare;
 import com.wso2telco.gsma.authenticators.attributeShare.AttributeShareFactory;
 import com.wso2telco.gsma.authenticators.attributeShare.TrustedSP2;
 import com.wso2telco.gsma.authenticators.internal.AuthenticatorEnum;
@@ -345,7 +346,7 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
 
             String loginPage = getAuthEndpointUrl(showTnC, isRegistering,Boolean.parseBoolean( attributeset.get(Constants.IS_DISPLAYSCOPE)));
 
-            if(Boolean.valueOf(attributeset.get(Constants.IS_AUNTHENTICATION_CONTINUE))){
+            if(Boolean.valueOf(attributeset.get(Constants.IS_AUNTHENTICATION_CONTINUE)) || Boolean.valueOf(context.getProperty(Constants.AUTHENTICATED_USER).toString())){
                 throw new AuthenticationFailedException("Authentication terminate");
 
             }else  if(Boolean.parseBoolean( attributeset.get(Constants.IS_DISPLAYSCOPE))){
@@ -861,7 +862,7 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
 
             if(context.getProperty(Constants.LONGLIVEDSCOPES)!= null) {
                 try {
-                TrustedSP2.persistConsentedScopeDetails(context);
+                AbstractAttributeShare.persistConsentedScopeDetails(context);
             } catch (Exception e){
                     throw new  AuthenticationFailedException("error occurred while persiste data");
                 }
