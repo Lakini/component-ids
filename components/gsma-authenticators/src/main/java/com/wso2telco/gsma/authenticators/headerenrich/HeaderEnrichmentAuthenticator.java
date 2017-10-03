@@ -26,7 +26,6 @@ import com.wso2telco.gsma.authenticators.Constants;
 import com.wso2telco.gsma.authenticators.IPRangeChecker;
 import com.wso2telco.gsma.authenticators.attributeShare.AbstractAttributeShare;
 import com.wso2telco.gsma.authenticators.attributeShare.AttributeShareFactory;
-import com.wso2telco.gsma.authenticators.attributeShare.TrustedSP2;
 import com.wso2telco.gsma.authenticators.internal.AuthenticatorEnum;
 import com.wso2telco.gsma.authenticators.util.*;
 import com.wso2telco.gsma.manager.client.ClaimManagementClient;
@@ -153,10 +152,11 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
 
                 boolean isattribute = (boolean) context.getProperty(Constants.IS_ATTRIBUTE_SHARING_SCOPE);
                 boolean isRegistering = (boolean) context.getProperty(Constants.IS_REGISTERING);
-                Map<String, String> attributeset = new HashMap();
-                boolean isDisplayScopes = false;
+                String msisdn = context.getProperty(Constants.MSISDN).toString();
+                Map<String, String> attributeset;
+                boolean isDisplayScopes;
 
-                if (!isRegistering && isattribute && Constants.NO.equalsIgnoreCase(context.getProperty(Constants.IS_CONSENTED).toString())) {
+                if (!isRegistering && isattribute && Constants.NO.equalsIgnoreCase(context.getProperty(Constants.IS_CONSENTED).toString()) && StringUtils.isNotEmpty(msisdn)) {
 
                     attributeset = AttributeShareFactory.getAttributeSharable(context.getProperty(Constants.TRUSTED_STATUS).toString()).getAttributeShareDetails(context);
                     boolean flowStatus = Boolean.valueOf(attributeset.get(Constants.IS_AUNTHENTICATION_CONTINUE));
@@ -164,6 +164,8 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
 
                     if(flowStatus){
 
+                        AuthenticationContextHelper.setSubject(context, context.getProperty(Constants.MSISDN).toString());
+                        context.setProperty(Constants.TERMINATE_BY_REMOVE_FOLLOWING_STEPS, "true");
                         return AuthenticatorFlowStatus.SUCCESS_COMPLETED;
 
                     } else if (!flowStatus && isDisplayScopes) {
@@ -340,14 +342,14 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
                             .REDIRECT_TO_CONSENT_PAGE, "Redirecting to consent page");
 
 
-              if(isattribute){
+              if(isattribute && StringUtils.isNotEmpty(msisdn)){
                 attributeset = AttributeShareFactory.getAttributeSharable(context.getProperty(Constants.TRUSTED_STATUS).toString()).getAttributeShareDetails(context);
              }
 
             String loginPage = getAuthEndpointUrl(showTnC, isRegistering,Boolean.parseBoolean( attributeset.get(Constants.IS_DISPLAYSCOPE)));
 
-            if(Boolean.valueOf(attributeset.get(Constants.IS_AUNTHENTICATION_CONTINUE)) || Boolean.valueOf(context.getProperty(Constants.AUTHENTICATED_USER).toString())){
-                throw new AuthenticationFailedException("Authentication terminate");
+            if(Boolean.valueOf(attributeset.get(Constants.IS_AUNTHENTICATION_CONTINUE))){
+                handleAttriShareResponse(context);
 
             }else  if(Boolean.parseBoolean( attributeset.get(Constants.IS_DISPLAYSCOPE))){
 
@@ -868,7 +870,7 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
                 }
         }
 
-        if(AuthenticatorEnum.TrustedStatus.TRUSTED.toString().equalsIgnoreCase(context.getProperty(Constants.TRUSTED_STATUS).toString())) {
+        if(!AuthenticatorEnum.TrustedStatus.UNTRUSTED.toString().equalsIgnoreCase(context.getProperty(Constants.TRUSTED_STATUS).toString())) {
             AuthenticationContextHelper.setSubject(context, context.getProperty(Constants.MSISDN).toString());
             context.setProperty(Constants.AUTHENTICATED_USER,"true");
             context.setProperty(Constants.TERMINATE_BY_REMOVE_FOLLOWING_STEPS, "true");
