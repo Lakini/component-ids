@@ -108,7 +108,7 @@
                     <preparationGoals>clean install</preparationGoals>
                     <autoVersionSubmodules>true</autoVersionSubmodules>
                 </configuration>
-		<dependencies>
+		    <dependencies>
                 <dependency>
                     <groupId>org.apache.maven.scm</groupId>
                     <artifactId>maven-scm-provider-gitexe</artifactId>

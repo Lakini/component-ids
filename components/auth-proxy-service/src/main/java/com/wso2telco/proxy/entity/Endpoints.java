@@ -107,6 +107,7 @@ public class Endpoints {
 
     static {
         try {
+
             //Load mobile-connect.xml file.
             mobileConnectConfigs = configurationService.getDataHolder().getMobileConnectConfig();
             //Load scope-config.xml file.

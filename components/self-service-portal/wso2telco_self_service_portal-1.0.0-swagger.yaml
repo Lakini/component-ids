@@ -71,12 +71,15 @@ definitions:
       data:
         $ref: '#/definitions/UserInfoModel'
 
+<<<<<<< HEAD
   UserInfoResponse:
     type: object
     properties:
       data:
         $ref: '#/definitions/UserInfoModel'
 
+=======
+>>>>>>> 11b54f930f4b70c271853610da59dcac9828a29b
   UserInfoModel:
     required:
       - "phone"

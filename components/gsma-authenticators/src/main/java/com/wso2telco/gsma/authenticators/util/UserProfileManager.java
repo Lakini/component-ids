@@ -10,7 +10,6 @@ import com.wso2telco.gsma.manager.util.UserProfileClaimsConstant;
 import org.apache.axis2.AxisFault;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.tools.ant.taskdefs.condition.HasFreeSpace;
 import org.wso2.carbon.authenticator.stub.LoginAuthenticationExceptionException;
 import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
 import org.wso2.carbon.identity.base.IdentityException;
@@ -35,8 +34,6 @@ public class UserProfileManager {
     private static final String OPERATOR_CLAIM_NAME = "http://wso2.org/claims/operator";
 
     private static final String LOA_CLAIM_NAME = "http://wso2.org/claims/loa";
-
-    private static final String SCOPE_MNV = "mnv";
 
     private static final String LOA_CPI_VALUE = "1";
 

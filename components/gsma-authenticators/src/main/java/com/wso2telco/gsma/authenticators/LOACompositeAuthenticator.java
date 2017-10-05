@@ -137,7 +137,6 @@ public class LOACompositeAuthenticator implements ApplicationAuthenticator,
         String trustedStatus = request.getParameter(Constants.TRUSTED_STATUS);
         String attrShareScopeType = request.getParameter(Constants.ATTRSHARE_SCOPE_TYPE);
 
-        boolean isShowTnc = Boolean.parseBoolean(request.getParameter(Constants.IS_SHOW_TNC));
         ScopeParam.msisdnMismatchResultTypes headerMismatchResult = ScopeParam.msisdnMismatchResultTypes.valueOf(
                 request.getParameter(Constants.HEADER_MISMATCH_RESULT));
 

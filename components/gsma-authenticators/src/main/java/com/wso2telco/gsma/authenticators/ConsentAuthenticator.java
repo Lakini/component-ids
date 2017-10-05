@@ -1,5 +1,6 @@
+
 /*******************************************************************************
- * Copyright (c) 2015-2016, WSO2.Telco Inc. (http://www.wso2telco.com) 
+ * Copyright (c) 2015-2016, WSO2.Telco Inc. (http://www.wso2telco.com)
  *
  * All Rights Reserved. WSO2.Telco Inc. licences this file to you under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +45,6 @@ import com.wso2telco.gsma.authenticators.util.AuthenticationContextHelper;
 import com.wso2telco.gsma.authenticators.util.FrameworkServiceDataHolder;
 import com.wso2telco.ids.datapublisher.model.UserStatus;
 import com.wso2telco.ids.datapublisher.util.DataPublisherUtil;
-import com.wso2telco.util.Params;
 
 // TODO: Auto-generated Javadoc
 
@@ -66,7 +66,7 @@ public class ConsentAuthenticator extends AbstractApplicationAuthenticator
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.wso2.carbon.identity.application.authentication.framework.
 	 * ApplicationAuthenticator#canHandle(javax
 	 * .servlet.http.HttpServletRequest)
@@ -79,7 +79,7 @@ public class ConsentAuthenticator extends AbstractApplicationAuthenticator
 
 		if ((request.getParameter(Constants.ACTION) != null && !request.getParameter(Constants.ACTION).isEmpty())
 				|| (request.getParameter(Constants.MSISDN) != null
-						&& !request.getParameter(Constants.MSISDN).isEmpty())) {
+				&& !request.getParameter(Constants.MSISDN).isEmpty())) {
 			log.info("msisdn forwarding ");
 			return true;
 		}
@@ -91,12 +91,12 @@ public class ConsentAuthenticator extends AbstractApplicationAuthenticator
 		return ((context.getProperty(Constants.MSISDN) != null
 				&& !context.getProperty(Constants.MSISDN).toString().isEmpty())
 				&& (context.getProperty(Constants.REDIRECT_CONSENT) == null
-						|| !(Boolean) context.getProperty(Constants.REDIRECT_CONSENT)));
+				|| !(Boolean) context.getProperty(Constants.REDIRECT_CONSENT)));
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.wso2.carbon.identity.application.authentication.framework.
 	 * AbstractApplicationAuthenticator#process
 	 * (javax.servlet.http.HttpServletRequest,
@@ -105,7 +105,7 @@ public class ConsentAuthenticator extends AbstractApplicationAuthenticator
 	 */
 	@Override
 	public AuthenticatorFlowStatus process(HttpServletRequest request, HttpServletResponse response,
-			AuthenticationContext context) throws AuthenticationFailedException, LogoutFailedException {
+										   AuthenticationContext context) throws AuthenticationFailedException, LogoutFailedException {
 		if (context.isLogoutRequest()) {
 			return AuthenticatorFlowStatus.SUCCESS_COMPLETED;
 		} else {
@@ -115,7 +115,7 @@ public class ConsentAuthenticator extends AbstractApplicationAuthenticator
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.wso2.carbon.identity.application.authentication.framework
 	 * .AbstractApplicationAuthenticator#initiateAuthenticationRequest(javax.
 	 * servlet.http.HttpServletRequest, javax .servlet.http.HttpServletResponse,
@@ -124,7 +124,7 @@ public class ConsentAuthenticator extends AbstractApplicationAuthenticator
 	 */
 	@Override
 	protected void initiateAuthenticationRequest(HttpServletRequest request, HttpServletResponse response,
-			AuthenticationContext context) throws AuthenticationFailedException {
+												 AuthenticationContext context) throws AuthenticationFailedException {
 
 		log.info("Initiating authentication request");
 
@@ -133,9 +133,6 @@ public class ConsentAuthenticator extends AbstractApplicationAuthenticator
 			String clientID = context.getProperty(Constants.CLIENT_ID).toString();
 			String operator = context.getProperty(Constants.OPERATOR).toString();
 			int operatorID = (DBUtil.getOperatorDetails(operator)).getOperatorId();
-			String apiScopes = context.getProperty(Constants.API_SCOPES).toString();
-			String apiScopesMinBracket = apiScopes.substring( 1, apiScopes.length() - 1);
-			String[] api_Scopes = apiScopesMinBracket.split( ", ");
 			context.setProperty(Constants.OPERATOR_ID, operatorID);
 			if(context.getProperty(Constants.API_SCOPES) == null){
 				response.sendRedirect(
@@ -216,7 +213,7 @@ public class ConsentAuthenticator extends AbstractApplicationAuthenticator
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.wso2.carbon.identity.application.authentication.framework
 	 * .AbstractApplicationAuthenticator#processAuthenticationResponse(javax.
 	 * servlet.http.HttpServletRequest, javax .servlet.http.HttpServletResponse,
@@ -225,7 +222,7 @@ public class ConsentAuthenticator extends AbstractApplicationAuthenticator
 	 */
 	@Override
 	protected void processAuthenticationResponse(HttpServletRequest request, HttpServletResponse response,
-			AuthenticationContext context) throws AuthenticationFailedException {
+												 AuthenticationContext context) throws AuthenticationFailedException {
 		log.info("Processing authentication response");
 		String msisdn = context.getProperty(Constants.MSISDN).toString();
 		String clientID = context.getProperty(Constants.CLIENT_ID).toString();
@@ -236,96 +233,96 @@ public class ConsentAuthenticator extends AbstractApplicationAuthenticator
 		if (userAction != null && !userAction.isEmpty()) {
 			// Change behaviour depending on user action
 			switch (userAction) {
-			case Constants.APPROVEALL:
-				String scopesString = context.getProperty(Constants.APPROVED_ALL_SCOPES).toString();
-				String scopesStringMinBracket = scopesString.substring( 1, scopesString.length() - 1);
-				String[] api_Scopes = scopesStringMinBracket.split( ", ");				
-				log.debug("MSISDN before inserting :" + msisdn);
-				log.debug("Service Provider Name before inserting:" + clientID);
-				log.debug("operator before inserting:" + operator);
-				log.debug("scope before inserting:" + api_Scopes);
-				try {
-					for(String apiScope : api_Scopes){
-						DBUtil.insertUserConsentDetails(msisdn, apiScope, clientID, operatorID);
-						DBUtil.insertConsentHistoryDetails(msisdn, apiScope, clientID, operatorID, "approveall");
-					}
-				} catch (SQLException | NamingException e) {
-					e.printStackTrace();
-				}
-				break;
-			case Constants.APPROVE:
-				if(context.getProperty(Constants.APPROVED_SCOPES)!=null){
-					String approvedScopesString = context.getProperty(Constants.APPROVED_SCOPES).toString();
-					String approvedScopesStringMinBracket = approvedScopesString.substring( 1, approvedScopesString.length() - 1);
-					String[] approved_scopes = approvedScopesStringMinBracket.split( ", ");	
+				case Constants.APPROVEALL:
+					String scopesString = context.getProperty(Constants.APPROVED_ALL_SCOPES).toString();
+					String scopesStringMinBracket = scopesString.substring( 1, scopesString.length() - 1);
+					String[] api_Scopes = scopesStringMinBracket.split( ", ");
+					log.debug("MSISDN before inserting :" + msisdn);
+					log.debug("Service Provider Name before inserting:" + clientID);
+					log.debug("operator before inserting:" + operator);
+					log.debug("scope before inserting:" + api_Scopes);
 					try {
-						for(String apprScope : approved_scopes){
-							DBUtil.insertConsentHistoryDetails(msisdn, apprScope, clientID, operatorID, "approve");
+						for(String apiScope : api_Scopes){
+							DBUtil.insertUserConsentDetails(msisdn, apiScope, clientID, operatorID);
+							DBUtil.insertConsentHistoryDetails(msisdn, apiScope, clientID, operatorID, "approveall");
 						}
 					} catch (SQLException | NamingException e) {
 						e.printStackTrace();
 					}
-				}
-				
-				else if(context.getProperty(Constants.APPROVED_ALL_SCOPES)!=null){
-					String approvedScopesString = context.getProperty(Constants.APPROVED_ALL_SCOPES).toString();
-					String approvedScopesStringMinBracket = approvedScopesString.substring( 1, approvedScopesString.length() - 1);
-					String[] approved_scopes = approvedScopesStringMinBracket.split( ", ");	
-					try {
-						for(String apprScope : approved_scopes){
-							DBUtil.insertConsentHistoryDetails(msisdn, apprScope, clientID, operatorID, "approve");
+					break;
+				case Constants.APPROVE:
+					if(context.getProperty(Constants.APPROVED_SCOPES)!=null){
+						String approvedScopesString = context.getProperty(Constants.APPROVED_SCOPES).toString();
+						String approvedScopesStringMinBracket = approvedScopesString.substring( 1, approvedScopesString.length() - 1);
+						String[] approved_scopes = approvedScopesStringMinBracket.split( ", ");
+						try {
+							for(String apprScope : approved_scopes){
+								DBUtil.insertConsentHistoryDetails(msisdn, apprScope, clientID, operatorID, "approve");
+							}
+						} catch (SQLException | NamingException e) {
+							e.printStackTrace();
 						}
-					} catch (SQLException | NamingException e) {
-						e.printStackTrace();
 					}
-				}			
-				break;
-			case Constants.DENY:
-				if(context.getProperty(Constants.APPROVED_SCOPES)!=null){
-					String approvedScopesString = context.getProperty(Constants.APPROVED_SCOPES).toString();
-					String approvedScopesStringMinBracket = approvedScopesString.substring( 1, approvedScopesString.length() - 1);
-					String[] approved_scopes = approvedScopesStringMinBracket.split( ", ");	
-					try {
-						for(String apprScope : approved_scopes){
-							DBUtil.insertConsentHistoryDetails(msisdn, apprScope, clientID, operatorID, "deny");
+
+					else if(context.getProperty(Constants.APPROVED_ALL_SCOPES)!=null){
+						String approvedScopesString = context.getProperty(Constants.APPROVED_ALL_SCOPES).toString();
+						String approvedScopesStringMinBracket = approvedScopesString.substring( 1, approvedScopesString.length() - 1);
+						String[] approved_scopes = approvedScopesStringMinBracket.split( ", ");
+						try {
+							for(String apprScope : approved_scopes){
+								DBUtil.insertConsentHistoryDetails(msisdn, apprScope, clientID, operatorID, "approve");
+							}
+						} catch (SQLException | NamingException e) {
+							e.printStackTrace();
 						}
-					} catch (SQLException | NamingException e) {
-						e.printStackTrace();
 					}
-				}
-				
-				else if(context.getProperty(Constants.APPROVED_ALL_SCOPES)!=null){
-					String approvedScopesString = context.getProperty(Constants.APPROVED_ALL_SCOPES).toString();
-					String approvedScopesStringMinBracket = approvedScopesString.substring( 1, approvedScopesString.length() - 1);
-					String[] approved_scopes = approvedScopesStringMinBracket.split( ", ");	
-					try {
-						for(String apprScope : approved_scopes){
-							DBUtil.insertConsentHistoryDetails(msisdn, apprScope, clientID, operatorID, "deny");
+					break;
+				case Constants.DENY:
+					if(context.getProperty(Constants.APPROVED_SCOPES)!=null){
+						String approvedScopesString = context.getProperty(Constants.APPROVED_SCOPES).toString();
+						String approvedScopesStringMinBracket = approvedScopesString.substring( 1, approvedScopesString.length() - 1);
+						String[] approved_scopes = approvedScopesStringMinBracket.split( ", ");
+						try {
+							for(String apprScope : approved_scopes){
+								DBUtil.insertConsentHistoryDetails(msisdn, apprScope, clientID, operatorID, "deny");
+							}
+						} catch (SQLException | NamingException e) {
+							e.printStackTrace();
 						}
-					} catch (SQLException | NamingException e) {
-						e.printStackTrace();
 					}
-				}		
-				terminateAuthentication(context);
-				break;
-			default:
-				// do nothing
-				break;
+
+					else if(context.getProperty(Constants.APPROVED_ALL_SCOPES)!=null){
+						String approvedScopesString = context.getProperty(Constants.APPROVED_ALL_SCOPES).toString();
+						String approvedScopesStringMinBracket = approvedScopesString.substring( 1, approvedScopesString.length() - 1);
+						String[] approved_scopes = approvedScopesStringMinBracket.split( ", ");
+						try {
+							for(String apprScope : approved_scopes){
+								DBUtil.insertConsentHistoryDetails(msisdn, apprScope, clientID, operatorID, "deny");
+							}
+						} catch (SQLException | NamingException e) {
+							e.printStackTrace();
+						}
+					}
+					terminateAuthentication(context);
+					break;
+				default:
+					// do nothing
+					break;
 			}
 		}
 		AuthenticationContextHelper.setSubject(context, msisdn);
-	    if((boolean) context.getProperty(Constants.IS_OFFNET_FLOW) || ((int)context.getProperty(Constants.ACR)==3)){
-	    	context.setProperty(Constants.TERMINATE_BY_REMOVE_FOLLOWING_STEPS, "false");
-	    }
-	    else{	    	
-	    	context.setProperty(Constants.TERMINATE_BY_REMOVE_FOLLOWING_STEPS, "true");
-	    }
-	
-		
+		if((boolean) context.getProperty(Constants.IS_OFFNET_FLOW) || ((int)context.getProperty(Constants.ACR)==3)){
+			context.setProperty(Constants.TERMINATE_BY_REMOVE_FOLLOWING_STEPS, "false");
+		}
+		else{
+			context.setProperty(Constants.TERMINATE_BY_REMOVE_FOLLOWING_STEPS, "true");
+		}
+
+
 	}
 
 	public AuthenticatorFlowStatus processRequest(HttpServletRequest request, HttpServletResponse response,
-			AuthenticationContext context) throws AuthenticationFailedException, LogoutFailedException {
+												  AuthenticationContext context) throws AuthenticationFailedException, LogoutFailedException {
 		if (context.isLogoutRequest()) {
 			try {
 				if (!canHandle(request)) {
@@ -345,7 +342,7 @@ public class ConsentAuthenticator extends AbstractApplicationAuthenticator
 			}
 		} else if ((canHandle(request) || canProcessResponse(context))
 				&& (request.getAttribute("commonAuthHandled") == null
-						|| !(Boolean) request.getAttribute("commonAuthHandled"))) {
+				|| !(Boolean) request.getAttribute("commonAuthHandled"))) {
 			try {
 				processAuthenticationResponse(request, response, context);
 				if (this instanceof LocalApplicationAuthenticator
@@ -399,7 +396,7 @@ public class ConsentAuthenticator extends AbstractApplicationAuthenticator
 	}
 
 	private void publishAuthenticationStepAttempt(HttpServletRequest request, AuthenticationContext context, User user,
-			boolean success) {
+												  boolean success) {
 		AuthenticationDataPublisher authnDataPublisherProxy = FrameworkServiceDataHolder.getInstance()
 				.getAuthnDataPublisherProxy();
 		if (authnDataPublisherProxy != null && authnDataPublisherProxy.isEnabled(context)) {
@@ -439,7 +436,7 @@ public class ConsentAuthenticator extends AbstractApplicationAuthenticator
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.wso2.carbon.identity.application.authentication.framework
 	 * .AbstractApplicationAuthenticator#retryAuthenticationEnabled()
 	 */
@@ -451,7 +448,7 @@ public class ConsentAuthenticator extends AbstractApplicationAuthenticator
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.wso2.carbon.identity.application.authentication.framework
 	 * .ApplicationAuthenticator#getContextIdentifier(javax.servlet.http.
 	 * HttpServletRequest)
@@ -463,7 +460,7 @@ public class ConsentAuthenticator extends AbstractApplicationAuthenticator
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.wso2.carbon.identity.application.authentication.framework.
 	 * ApplicationAuthenticator#getFriendlyName()
 	 */
@@ -483,7 +480,7 @@ public class ConsentAuthenticator extends AbstractApplicationAuthenticator
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.wso2.carbon.identity.application.authentication.framework.
 	 * ApplicationAuthenticator#getName()
 	 */

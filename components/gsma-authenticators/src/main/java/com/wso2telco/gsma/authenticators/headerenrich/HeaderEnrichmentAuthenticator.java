@@ -102,6 +102,7 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
     static {
         // loads operator and ip validation to static map
         operators = configurationService.getDataHolder().getMobileConnectConfig().getHEADERENRICH().getOperators();
+
         for (MobileConnectConfig.OPERATOR op : operators) {
             operatorIpValidation.put(op.getOperatorName(), Boolean.valueOf(op.getIpValidation()));
         }
@@ -150,7 +151,6 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
             try {
 
                 boolean isattribute = (boolean) context.getProperty(Constants.IS_ATTRIBUTE_SHARING_SCOPE);
-                String operator = context.getProperty(Constants.OPERATOR).toString();
                 boolean isRegistering = (boolean) context.getProperty(Constants.IS_REGISTERING);
                 String msisdn = context.getProperty(Constants.MSISDN).toString();
                 Map<String, String> attributeset;
@@ -329,6 +329,8 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
             log.debug("Query parameters : " + queryParams);
         }
 
+        Map<String, String> attributeset = new HashMap();
+
         try {
 
             boolean isattribute = (boolean) context.getProperty(Constants.IS_ATTRIBUTE_SHARING_SCOPE);
@@ -380,6 +382,9 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
     protected void processAuthenticationResponse(HttpServletRequest request,
                                                  HttpServletResponse response, AuthenticationContext context)
             throws AuthenticationFailedException {
+
+
+
 
         UserStatus userStatus = (UserStatus) context.getParameter(Constants.USER_STATUS_DATA_PUBLISHING_PARAM);
 
@@ -886,4 +891,6 @@ public class HeaderEnrichmentAuthenticator extends AbstractApplicationAuthentica
         }
 
     }
+
 }
+

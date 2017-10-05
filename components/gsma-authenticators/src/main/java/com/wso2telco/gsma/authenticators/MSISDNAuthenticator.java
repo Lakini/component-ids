@@ -227,6 +227,7 @@ public class MSISDNAuthenticator extends AbstractApplicationAuthenticator
                             isConvertToActive = true;
                         }
                     }
+                }
 
                 context.setProperty(Constants.IS_REGISTERING, !isUserExists);
                 context.setProperty(Constants.IS_STATUS_TO_CHANGE, isConvertToActive);
