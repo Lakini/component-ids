@@ -74,7 +74,6 @@ public class MSISDNAuthenticator extends AbstractApplicationAuthenticator
 
     private static final String STATUS_PARTIALLY_ACTIVE = "PARTIALLY_ACTIVE";
 
-    private static final int ACR3 = 3;
 
     /* (non-Javadoc)
      * @see org.wso2.carbon.identity.application.authentication.framework.ApplicationAuthenticator#canHandle(javax
@@ -259,21 +258,14 @@ public class MSISDNAuthenticator extends AbstractApplicationAuthenticator
                         DataPublisherUtil.UserState.MSISDN_SET_TO_USER_INPUT,
                         "MSISDN set to user input in MSISDNAuthenticator", msisdn, isUserExists ? 0 : 1);
                 int requestedLoa = (int) context.getProperty(Constants.ACR);
-                String operator = (String) context.getProperty(Constants.OPERATOR);
                 boolean isProfileUpgrade = Util.isProfileUpgrade(msisdn, requestedLoa, isUserExists);
                 context.setProperty(Constants.IS_PROFILE_UPGRADE, isProfileUpgrade);
-                Boolean isAttributeShare = (Boolean) context.getProperty(Constants.IS_ATTRIBUTE_SHARING_SCOPE);
-                String spType = context.getProperty(Constants.TRUSTED_STATUS).toString();
-                String attrShareType = context.getProperty(Constants.ATTRSHARE_SCOPE_TYPE).toString();
+
 
                 if (!isUserExists && isShowTnC) {
                     retryAuthenticatorForConsent(context);
                 }
 
-                if ((requestedLoa == ACR3 ) && (isConvertToActive)) {
-                    new UserProfileManager().createUserProfileLoa3(msisdn, operator, null, null,
-                            null, isAttributeShare,spType,attrShareType);
-                }
             } else {
                 msisdn = context.getProperty(Constants.MSISDN).toString();
                 String userAction = request.getParameter(Constants.ACTION);
@@ -306,21 +298,9 @@ public class MSISDNAuthenticator extends AbstractApplicationAuthenticator
                     }
                 } else {
                     boolean isRegistering = (boolean) context.getProperty(Constants.IS_REGISTERING);
-                    boolean isConvertToActive = (boolean) context.getProperty(Constants.IS_STATUS_TO_CHANGE);
-                    int requestedLoa = (int) context.getProperty(Constants.ACR);
-                    String operator = (String) context.getProperty(Constants.OPERATOR);
-                    Boolean isAttrShare = (Boolean) context.getProperty(Constants.IS_ATTRIBUTE_SHARING_SCOPE);
-                    String spType = context.getProperty(Constants.TRUSTED_STATUS).toString();
-                    String attrShareType = context.getProperty(Constants.ATTRSHARE_SCOPE_TYPE).toString();
-
 
                     if (isRegistering && isShowTnC) {
                         retryAuthenticatorForConsent(context);
-                    }
-
-                    if ((requestedLoa == Integer.getInteger(Constants.LOA3)) && (isConvertToActive)) {
-                        new UserProfileManager().createUserProfileLoa3(msisdn, operator, null, null,
-                                null, isAttrShare,spType,attrShareType);
                     }
                 }
             }
