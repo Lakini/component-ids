@@ -14,11 +14,15 @@ import com.wso2telco.gsma.authenticators.internal.AuthenticatorEnum;
 import com.wso2telco.gsma.authenticators.model.SPConsent;
 import com.wso2telco.gsma.authenticators.model.UserConsentDetails;
 import com.wso2telco.gsma.authenticators.model.UserConsentHistory;
+import com.wso2telco.gsma.authenticators.util.UserProfileManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
+import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
+import org.wso2.carbon.identity.user.registration.stub.UserRegistrationAdminServiceIdentityException;
 
 import javax.naming.NamingException;
+import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -205,5 +209,26 @@ public abstract class AbstractAttributeShare implements AttributeSharable {
         }
         attributeConfigDAO.saveUserConsentedAttributes(userConsentHistoryList);
 
+    }
+
+    public static void createUserProfile(AuthenticationContext context) throws AuthenticationFailedException{
+
+        String msisdn = context.getProperty(Constants.MSISDN).toString();
+        String operator = context.getProperty(Constants.OPERATOR).toString();
+        boolean isRegistering = (boolean) context.getProperty(Constants.IS_REGISTERING);
+        boolean isAttributeScope = (Boolean)context.getProperty(Constants.IS_ATTRIBUTE_SHARING_SCOPE);
+        String spType = context.getProperty(Constants.TRUSTED_STATUS).toString();
+        String attrShareType = context.getProperty(Constants.ATTRSHARE_SCOPE_TYPE).toString();
+
+        try {
+
+            if(isRegistering){
+
+                new UserProfileManager().createUserProfileLoa2(msisdn, operator,isAttributeScope,spType,attrShareType);
+
+            }
+        } catch (RemoteException | UserRegistrationAdminServiceIdentityException e) {
+            throw new AuthenticationFailedException(e.getMessage(), e);
+        }
     }
 }
