@@ -184,7 +184,7 @@ public class AttributeConfigDAOimpl implements AttributeConfigDAO {
     }
 
 
-    public UserConsentDetails getUserConsentDetails(UserConsentDetails userConsentDetails) throws SQLException, NamingException {
+    public UserConsentDetails getUserConsentDetails(UserConsentDetails userConsentDetails,String operatorName) throws SQLException, NamingException {
 
         Connection connection = null;
         PreparedStatement preparedStatement = null;
@@ -197,8 +197,10 @@ public class AttributeConfigDAOimpl implements AttributeConfigDAO {
         sqlBuilder.append(FROM);
         sqlBuilder.append(TableName.CONSENT_HISTORY + " usercon ");
         sqlBuilder.append("INNER JOIN scope_parameter scp ON scp.param_id=usercon.scope_id");
+        sqlBuilder.append("INNER JOIN operators op ON op.ID=usercon.operator_id");
         sqlBuilder.append(" where");
-        sqlBuilder.append(" scp.scope=? ");
+        sqlBuilder.append(" op.operatorname=?");
+        sqlBuilder.append(" AND scp.scope=? ");
         sqlBuilder.append(" AND usercon.operator_id=? ");
         sqlBuilder.append(" AND usercon.client_id=? ");
         sqlBuilder.append("AND usercon.msisdn=?");
@@ -206,10 +208,11 @@ public class AttributeConfigDAOimpl implements AttributeConfigDAO {
         try {
             connection = getConnectDBConnection();
             preparedStatement = connection.prepareStatement(sqlBuilder.toString());
-            preparedStatement.setString(1, userConsentDetails.getScope());
-            preparedStatement.setInt(2, userConsentDetails.getOperatorID());
-            preparedStatement.setString(3, userConsentDetails.getConsumerKey());
-            preparedStatement.setString(4, userConsentDetails.getMsisdn());
+            preparedStatement.setString(1, operatorName);
+            preparedStatement.setString(2, userConsentDetails.getScope());
+            preparedStatement.setInt(3, userConsentDetails.getOperatorID());
+            preparedStatement.setString(4, userConsentDetails.getConsumerKey());
+            preparedStatement.setString(5, userConsentDetails.getMsisdn());
 
             resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
