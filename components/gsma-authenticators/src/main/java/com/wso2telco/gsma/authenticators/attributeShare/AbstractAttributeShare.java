@@ -91,12 +91,12 @@ public abstract class AbstractAttributeShare implements AttributeSharable {
 
     private UserConsentDetails getUserConsentDetails(AuthenticationContext context, String scope) throws SQLException, NamingException {
         AttributeConfigDAO attributeConfigDAO = new AttributeConfigDAOimpl();
-        String operatorName = context.getProperty(Constants.OPERATOR).toString();
         UserConsentDetails userConsentDetails = new UserConsentDetails();
+        userConsentDetails.setOperatorName(context.getProperty(Constants.OPERATOR).toString());
         userConsentDetails.setConsumerKey(context.getProperty(Constants.CLIENT_ID).toString());
         userConsentDetails.setScope(scope);
         userConsentDetails.setMsisdn(context.getProperty(Constants.MSISDN).toString());
-        return attributeConfigDAO.getUserConsentDetails(userConsentDetails,operatorName);
+        return attributeConfigDAO.getUserConsentDetails(userConsentDetails);
 
     }
 

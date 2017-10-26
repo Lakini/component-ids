@@ -16,7 +16,7 @@ public interface AttributeConfigDAO {
 
     List<SPConsent> getScopeExprieTime(String operator, String consumerKey, String scope) throws SQLException, NamingException;
 
-    UserConsentDetails getUserConsentDetails(UserConsentDetails userConsentDetails,String operatorName) throws SQLException, NamingException;
+    UserConsentDetails getUserConsentDetails(UserConsentDetails userConsentDetails) throws SQLException, NamingException;
 
     public String getSPConfigValue(String operator, String clientID, String key)
             throws SQLException, NamingException;
